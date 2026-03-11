@@ -329,6 +329,53 @@ export const useGameStore = create<GameState>((set, get) => ({
           newSchedule[index] = updatedGame;
         }
 
+        // Update player stats
+        newPlayers = newPlayers.map(p => {
+          if (p.id === winningPitcherId && p.seasonStats) {
+            return { ...p, seasonStats: { ...p.seasonStats, wins: p.seasonStats.wins + 1, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 6, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 8) + 2 } };
+          }
+          if (p.id === losingPitcherId && p.seasonStats) {
+            return { ...p, seasonStats: { ...p.seasonStats, losses: p.seasonStats.losses + 1, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 5, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 5) + 1 } };
+          }
+          if (p.id === mvpId && p.seasonStats) {
+            return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, atBats: p.seasonStats.atBats + 4, hits: p.seasonStats.hits + Math.floor(Math.random() * 3) + 2, homeRuns: p.seasonStats.homeRuns + (Math.random() > 0.7 ? 1 : 0), rbi: p.seasonStats.rbi + Math.floor(Math.random() * 4) + 1 } };
+          }
+          
+          // Random stats for other active players in this game
+          if ((homeActivePlayers.find(hp => hp.id === p.id) || awayActivePlayers.find(ap => ap.id === p.id)) && p.seasonStats) {
+            if (p.position === 'P') {
+              return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 1, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 2) } };
+            } else {
+              const ab = Math.floor(Math.random() * 2) + 3;
+              const hits = Math.floor(Math.random() * 3);
+              const hr = Math.random() > 0.9 ? 1 : 0;
+              const rbi = hr > 0 ? Math.floor(Math.random() * 3) + 1 : (hits > 0 ? Math.floor(Math.random() * 2) : 0);
+              const sb = Math.random() > 0.9 ? 1 : 0;
+              return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, atBats: p.seasonStats.atBats + ab, hits: p.seasonStats.hits + hits, homeRuns: p.seasonStats.homeRuns + hr, rbi: p.seasonStats.rbi + rbi, stolenBases: p.seasonStats.stolenBases + sb } };
+            }
+          }
+          return p;
+        });
+
+        // Random chance for injury
+        const allActivePlayers = [...homeActivePlayers, ...awayActivePlayers];
+        allActivePlayers.forEach(p => {
+          if (Math.random() < 0.005) { // 0.5% chance per game per player
+            const pIndex = newPlayers.findIndex(np => np.id === p.id);
+            if (pIndex !== -1) {
+              newPlayers[pIndex] = { ...newPlayers[pIndex], status: 'injured', lastMovedDate: newDate.toISOString() };
+              const team = state.teams.find(t => t.id === p.teamId);
+              newNews.unshift({
+                id: `N_injury_${game.id}_${p.id}`,
+                date: newDate.toISOString(),
+                title: `${team?.name} 傷兵公告`,
+                content: `${p.name} 在比賽中受傷，被放入傷兵名單。`,
+                type: 'roster'
+              });
+            }
+          }
+        });
+
         // Generate news for big wins or shutouts
         if (Math.abs(homeTotal - awayTotal) >= 8) {
           const winner = isHomeWin ? homeTeam : awayTeam;
@@ -400,6 +447,27 @@ export const useGameStore = create<GameState>((set, get) => ({
           }
         }
       });
+
+      // Recover injured players
+      if (isNewDay) {
+        newPlayers = newPlayers.map(p => {
+          if (p.status === 'injured' && p.lastMovedDate) {
+            const daysInjured = (newDate.getTime() - parseISO(p.lastMovedDate).getTime()) / (1000 * 3600 * 24);
+            if (daysInjured >= 7 && Math.random() < 0.2) { // Recover after at least 7 days with 20% chance per day
+              const team = state.teams.find(t => t.id === p.teamId);
+              newNews.unshift({
+                id: `N_recovery_${Date.now()}_${p.id}`,
+                date: newDate.toISOString(),
+                title: `${team?.name} 傷癒歸隊`,
+                content: `${p.name} 傷勢已無大礙，移出傷兵名單，目前在預備名單中。`,
+                type: 'roster'
+              });
+              return { ...p, status: 'reserve', lastMovedDate: newDate.toISOString() };
+            }
+          }
+          return p;
+        });
+      }
 
       // Keep only latest 50 news items
       if (newNews.length > 50) {

@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import Standings from './components/Standings';
 import Teams from './components/Teams';
 import Schedule from './components/Schedule';
+import Awards from './components/Awards';
 
 export default function App() {
   const { initialize } = useGameStore();
@@ -36,6 +37,8 @@ export default function App() {
         return <Teams />;
       case '#schedule':
         return <Schedule />;
+      case '#awards':
+        return <Awards />;
       default:
         return <Dashboard />;
     }

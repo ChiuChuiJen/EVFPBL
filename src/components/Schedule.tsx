@@ -19,23 +19,26 @@ export default function Schedule() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-zinc-100">賽程 Schedule</h2>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-zinc-100 tracking-tight">賽程 Schedule</h2>
+          <p className="text-zinc-500 mt-1">檢視每週賽事安排與結果</p>
+        </div>
         
-        <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
+        <div className="flex items-center gap-2 bg-zinc-900/80 border border-zinc-800/50 rounded-full p-1 shadow-inner backdrop-blur-sm">
           <button
             onClick={() => setViewDate(addDays(viewDate, -7))}
-            className="p-2 hover:bg-zinc-800 rounded-md transition-colors text-zinc-400 hover:text-zinc-100"
+            className="p-2 hover:bg-zinc-800 rounded-full transition-all text-zinc-400 hover:text-zinc-100 active:scale-95"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <span className="font-mono font-medium text-zinc-200 px-4">
-            {format(weekStart, 'yyyy-MM-dd')} ~ {format(addDays(weekStart, 6), 'MM-dd')}
+          <span className="font-mono font-bold text-zinc-200 px-4 tracking-wider">
+            {format(weekStart, 'yyyy-MM-dd')} <span className="text-zinc-600 font-sans mx-1">至</span> {format(addDays(weekStart, 6), 'MM-dd')}
           </span>
           <button
             onClick={() => setViewDate(addDays(viewDate, 7))}
-            className="p-2 hover:bg-zinc-800 rounded-md transition-colors text-zinc-400 hover:text-zinc-100"
+            className="p-2 hover:bg-zinc-800 rounded-full transition-all text-zinc-400 hover:text-zinc-100 active:scale-95"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -49,20 +52,22 @@ export default function Schedule() {
 
           return (
             <div key={day.toISOString()} className={cn(
-              "bg-zinc-900 border rounded-xl overflow-hidden flex flex-col h-[600px]",
-              isToday ? "border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : "border-zinc-800"
+              "bg-zinc-900/40 border rounded-2xl overflow-hidden flex flex-col h-[650px] backdrop-blur-sm transition-all",
+              isToday ? "border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20" : "border-zinc-800/50"
             )}>
               <div className={cn(
-                "p-3 text-center border-b font-medium",
-                isToday ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-zinc-950 text-zinc-400 border-zinc-800"
+                "p-4 text-center border-b font-medium",
+                isToday ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-zinc-950/80 text-zinc-400 border-zinc-800/50"
               )}>
-                <div className="text-sm uppercase">{format(day, 'EEE')}</div>
-                <div className="text-lg font-bold">{format(day, 'MM/dd')}</div>
+                <div className="text-xs uppercase tracking-widest font-bold mb-1">{format(day, 'EEE')}</div>
+                <div className="text-2xl font-black font-mono">{format(day, 'MM/dd')}</div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-2 space-y-2">
+              <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
                 {dayGames.length === 0 ? (
-                  <div className="text-center text-zinc-600 text-sm py-4">無賽程</div>
+                  <div className="flex flex-col items-center justify-center h-full text-zinc-600 text-sm py-8 border-2 border-dashed border-zinc-800/50 rounded-xl bg-zinc-900/20">
+                    <span className="font-medium">無賽程</span>
+                  </div>
                 ) : (
                   dayGames.map(game => {
                     const home = teams.find(t => t.id === game.homeTeamId);
@@ -72,26 +77,40 @@ export default function Schedule() {
                       <button 
                         key={game.id} 
                         onClick={() => setSelectedGameId(game.id)}
-                        className="w-full text-left bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm flex flex-col gap-2 hover:bg-zinc-800/50 hover:border-zinc-600 transition-all cursor-pointer"
+                        className="w-full text-left bg-zinc-950/80 border border-zinc-800/60 rounded-xl p-4 text-sm flex flex-col gap-3 hover:bg-zinc-900 hover:border-zinc-700 transition-all cursor-pointer group shadow-sm"
                       >
                         <div className="flex justify-between items-center text-xs text-zinc-500">
-                          <span>{game.league}</span>
+                          <span className="font-bold tracking-wider uppercase">{game.league}</span>
                           <span className={cn(
-                            "px-1.5 py-0.5 rounded",
-                            game.status === 'finished' ? "bg-zinc-800 text-zinc-400" : "bg-emerald-500/10 text-emerald-400"
+                            "px-2 py-0.5 rounded font-mono font-bold",
+                            game.status === 'finished' ? "bg-zinc-800 text-zinc-400" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                           )}>
-                            {game.status === 'finished' ? '結束' : format(parseISO(game.date), 'HH:mm')}
+                            {game.status === 'finished' ? 'FINAL' : format(parseISO(game.date), 'HH:mm')}
                           </span>
                         </div>
                         
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-zinc-300 truncate">{away?.name || game.awayTeamId}</span>
-                          <span className="font-mono font-bold text-zinc-400">{game.status === 'finished' ? game.awayScore : '-'}</span>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-zinc-300 truncate">{home?.name || game.homeTeamId}</span>
-                          <span className="font-mono font-bold text-zinc-400">{game.status === 'finished' ? game.homeScore : '-'}</span>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: away?.logoColor }}></div>
+                              <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{away?.name || game.awayTeamId}</span>
+                            </div>
+                            <span className={cn(
+                              "font-mono font-bold text-lg",
+                              game.status === 'finished' && game.awayScore > game.homeScore ? "text-zinc-100" : "text-zinc-500"
+                            )}>{game.status === 'finished' ? game.awayScore : '-'}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: home?.logoColor }}></div>
+                              <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{home?.name || game.homeTeamId}</span>
+                            </div>
+                            <span className={cn(
+                              "font-mono font-bold text-lg",
+                              game.status === 'finished' && game.homeScore > game.awayScore ? "text-zinc-100" : "text-zinc-500"
+                            )}>{game.status === 'finished' ? game.homeScore : '-'}</span>
+                          </div>
                         </div>
                       </button>
                     );

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { format, isSameDay, parseISO, getMonth, getDate } from 'date-fns';
 import GameDetailsModal from './GameDetailsModal';
+import { cn } from './Layout';
 
 function getSeasonPhase(date: Date) {
   const month = getMonth(date) + 1; // 1-12
@@ -28,21 +29,31 @@ export default function Dashboard() {
   const pLeagueTeams = teams.filter(t => t.league === 'P1').map(t => standings[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-zinc-100">總覽 Dashboard</h2>
-        <div className="px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg font-bold">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-zinc-100 tracking-tight">總覽 Dashboard</h2>
+          <p className="text-zinc-500 mt-1">檢視今日賽程與聯盟戰況</p>
+        </div>
+        <div className="px-5 py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.1)] flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
           {getSeasonPhase(currentDate)}
         </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Today's Games */}
-        <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-zinc-200 mb-4">今日賽程 ({format(currentDate, 'yyyy-MM-dd')})</h3>
+        <div className="lg:col-span-2 bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-6 backdrop-blur-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-zinc-200 flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+              今日賽程
+            </h3>
+            <span className="text-sm font-mono text-zinc-500 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">{format(currentDate, 'yyyy-MM-dd')}</span>
+          </div>
           
           {todaysGames.length === 0 ? (
-            <div className="text-zinc-500 py-8 text-center">今日無賽程</div>
+            <div className="text-zinc-500 py-12 text-center border border-dashed border-zinc-800 rounded-xl bg-zinc-900/20">今日無賽程</div>
           ) : (
             <div className="space-y-3">
               {todaysGames.map(game => {
@@ -53,29 +64,40 @@ export default function Dashboard() {
                   <button 
                     key={game.id} 
                     onClick={() => setSelectedGameId(game.id)}
-                    className="w-full flex items-center justify-between bg-zinc-950 p-4 rounded-lg border border-zinc-800 hover:bg-zinc-800/50 hover:border-zinc-600 transition-all cursor-pointer"
+                    className="w-full flex items-center justify-between bg-zinc-950/80 p-5 rounded-xl border border-zinc-800/60 hover:bg-zinc-900 hover:border-zinc-700 transition-all cursor-pointer group shadow-sm"
                   >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="text-right flex-1">
-                        <div className="font-bold text-lg text-zinc-100">{away?.name || game.awayTeamId}</div>
-                        <div className="text-sm text-zinc-500">{away?.league}</div>
+                    <div className="flex items-center gap-4 flex-1 justify-end">
+                      <div className="text-right">
+                        <div className="font-bold text-lg text-zinc-200 group-hover:text-zinc-100 transition-colors">{away?.name || game.awayTeamId}</div>
+                        <div className="text-xs text-zinc-500 uppercase tracking-wider mt-0.5">{away?.league}</div>
                       </div>
-                      <div className="text-2xl font-black w-12 text-center text-zinc-300">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-inner">
+                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: away?.logoColor }}></div>
+                      </div>
+                      <div className="text-3xl font-black w-12 text-center text-zinc-300 font-mono">
                         {game.status === 'finished' ? game.awayScore : '-'}
                       </div>
                     </div>
                     
-                    <div className="px-4 text-sm font-medium text-zinc-600">
-                      {game.status === 'finished' ? '結束' : format(parseISO(game.date), 'HH:mm')}
+                    <div className="px-6 flex flex-col items-center justify-center">
+                      <div className="text-xs font-bold text-zinc-600 uppercase tracking-widest mb-1">
+                        {game.status === 'finished' ? 'FINAL' : 'VS'}
+                      </div>
+                      <div className="text-sm font-mono text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                        {game.status === 'finished' ? '結束' : format(parseISO(game.date), 'HH:mm')}
+                      </div>
                     </div>
                     
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="text-2xl font-black w-12 text-center text-zinc-300">
+                    <div className="flex items-center gap-4 flex-1 justify-start">
+                      <div className="text-3xl font-black w-12 text-center text-zinc-300 font-mono">
                         {game.status === 'finished' ? game.homeScore : '-'}
                       </div>
-                      <div className="flex-1 text-left">
-                        <div className="font-bold text-lg text-zinc-100">{home?.name || game.homeTeamId}</div>
-                        <div className="text-sm text-zinc-500">{home?.league}</div>
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-inner">
+                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: home?.logoColor }}></div>
+                      </div>
+                      <div className="text-left">
+                        <div className="font-bold text-lg text-zinc-200 group-hover:text-zinc-100 transition-colors">{home?.name || game.homeTeamId}</div>
+                        <div className="text-xs text-zinc-500 uppercase tracking-wider mt-0.5">{home?.league}</div>
                       </div>
                     </div>
                   </button>
@@ -86,22 +108,34 @@ export default function Dashboard() {
         </div>
 
         {/* League Leaders */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-zinc-200 mb-4">聯盟領先者</h3>
+        <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-6 backdrop-blur-sm flex flex-col">
+          <h3 className="text-lg font-bold text-zinc-200 mb-6 flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
+            聯盟領先者
+          </h3>
           
-          <div className="space-y-6">
+          <div className="space-y-8 flex-1">
             <div>
-              <h4 className="text-sm font-bold text-emerald-400 mb-2 uppercase tracking-wider">R+ 聯盟</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded inline-block">R+ 聯盟</h4>
+              </div>
               <div className="space-y-2">
                 {rLeagueTeams.slice(0, 3).map((record, idx) => {
                   const team = teams.find(t => t.id === record.teamId);
                   return (
-                    <div key={record.teamId} className="flex items-center justify-between bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+                    <div key={record.teamId} className="flex items-center justify-between bg-zinc-950/80 p-3 rounded-xl border border-zinc-800/60 hover:border-zinc-700 transition-colors">
                       <div className="flex items-center gap-3">
-                        <span className="text-zinc-500 font-mono">{idx + 1}</span>
-                        <span className="font-medium text-zinc-200">{team?.name}</span>
+                        <div className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-mono",
+                          idx === 0 ? "bg-yellow-500/20 text-yellow-500 border border-yellow-500/30" : 
+                          idx === 1 ? "bg-zinc-400/20 text-zinc-400 border border-zinc-400/30" : 
+                          "bg-orange-700/20 text-orange-700 border border-orange-700/30"
+                        )}>
+                          {idx + 1}
+                        </div>
+                        <span className="font-bold text-zinc-200">{team?.name}</span>
                       </div>
-                      <div className="font-mono text-sm text-zinc-400">
+                      <div className="font-mono text-sm font-medium text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded">
                         {record.wins}W - {record.losses}L
                       </div>
                     </div>
@@ -111,17 +145,26 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <h4 className="text-sm font-bold text-emerald-400 mb-2 uppercase tracking-wider">P1 聯盟</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded inline-block">P1 聯盟</h4>
+              </div>
               <div className="space-y-2">
                 {pLeagueTeams.slice(0, 3).map((record, idx) => {
                   const team = teams.find(t => t.id === record.teamId);
                   return (
-                    <div key={record.teamId} className="flex items-center justify-between bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+                    <div key={record.teamId} className="flex items-center justify-between bg-zinc-950/80 p-3 rounded-xl border border-zinc-800/60 hover:border-zinc-700 transition-colors">
                       <div className="flex items-center gap-3">
-                        <span className="text-zinc-500 font-mono">{idx + 1}</span>
-                        <span className="font-medium text-zinc-200">{team?.name}</span>
+                        <div className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-mono",
+                          idx === 0 ? "bg-yellow-500/20 text-yellow-500 border border-yellow-500/30" : 
+                          idx === 1 ? "bg-zinc-400/20 text-zinc-400 border border-zinc-400/30" : 
+                          "bg-orange-700/20 text-orange-700 border border-orange-700/30"
+                        )}>
+                          {idx + 1}
+                        </div>
+                        <span className="font-bold text-zinc-200">{team?.name}</span>
                       </div>
-                      <div className="font-mono text-sm text-zinc-400">
+                      <div className="font-mono text-sm font-medium text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded">
                         {record.wins}W - {record.losses}L
                       </div>
                     </div>

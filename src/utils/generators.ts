@@ -93,6 +93,20 @@ export function generatePlayers(): Player[] {
               breaking: randomInt(40, 99)
             }
           } : {})
+        },
+        seasonStats: {
+          gamesPlayed: 0,
+          atBats: 0,
+          hits: 0,
+          homeRuns: 0,
+          rbi: 0,
+          stolenBases: 0,
+          inningsPitched: 0,
+          earnedRuns: 0,
+          strikeouts: 0,
+          wins: 0,
+          losses: 0,
+          saves: 0
         }
       };
       

@@ -40,6 +40,20 @@ export interface Player {
       breaking: number;
     };
   };
+  seasonStats?: {
+    gamesPlayed: number;
+    atBats: number;
+    hits: number;
+    homeRuns: number;
+    rbi: number;
+    stolenBases: number;
+    inningsPitched: number;
+    earnedRuns: number;
+    strikeouts: number;
+    wins: number;
+    losses: number;
+    saves: number;
+  };
   status: 'active' | 'reserve' | 'injured';
   lastMovedDate?: string;
 }
