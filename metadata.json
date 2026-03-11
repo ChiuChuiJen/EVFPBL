@@ -1,0 +1,5 @@
+{
+  "name": "東谷聯邦職業棒球聯盟",
+  "description": "東谷聯邦職業棒球聯盟 (EVFPBL) 模擬器。包含 R+ 聯盟與 P1 聯盟，完整賽季模擬、球員名單與賽程管理。",
+  "requestFramePermissions": []
+}
