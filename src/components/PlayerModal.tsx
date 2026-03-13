@@ -85,7 +85,10 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
                   player.position === 'C' ? "bg-red-500/10 text-red-400 border-red-500/20" :
                   "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                 )}>
-                  {player.position}
+                  {player.position === 'P' ? (player.pitcherRole || 'P') : player.position}
+                </span>
+                <span className="px-3 py-1 rounded-lg text-sm font-bold bg-zinc-800/50 text-zinc-300 border border-zinc-700/50">
+                  {player.throws || 'R'}投{player.bats || 'R'}打
                 </span>
                 {player.isForeign && (
                   <span className="px-2 py-1 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">洋將</span>
@@ -103,6 +106,21 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
                 )}>
                   {player.status === 'active' ? '一軍' : player.status === 'injured' ? '傷兵' : '二軍'}
                 </span>
+                <span className="w-1 h-1 rounded-full bg-zinc-700"></span>
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-400">體力</span>
+                  <div className="w-20 bg-zinc-800 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className={cn(
+                        "h-full rounded-full",
+                        (player.energy ?? 100) > 70 ? "bg-emerald-500" :
+                        (player.energy ?? 100) > 30 ? "bg-yellow-500" : "bg-red-500"
+                      )}
+                      style={{ width: `${player.energy ?? 100}%` }}
+                    ></div>
+                  </div>
+                  <span className="font-mono text-xs text-zinc-300">{player.energy ?? 100}</span>
+                </div>
               </div>
             </div>
           </div>

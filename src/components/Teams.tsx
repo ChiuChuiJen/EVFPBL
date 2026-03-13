@@ -100,7 +100,9 @@ export default function Teams() {
               <th className="p-4 pl-6 font-medium">姓名</th>
               <th className="p-4 font-medium">年齡</th>
               <th className="p-4 font-medium">守位</th>
+              <th className="p-4 font-medium">投/打</th>
               <th className="p-4 font-medium">身分</th>
+              <th className="p-4 font-medium text-right">體力</th>
               <th className="p-4 font-medium text-right">打擊</th>
               <th className="p-4 font-medium text-right">力量</th>
               <th className="p-4 font-medium text-right">速度</th>
@@ -120,8 +122,11 @@ export default function Teams() {
                     player.position === 'C' ? "bg-red-500/10 text-red-400 border-red-500/20" :
                     "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                   )}>
-                    {player.position}
+                    {player.position === 'P' ? (player.pitcherRole || 'P') : player.position}
                   </span>
+                </td>
+                <td className="p-4 text-zinc-400 font-mono text-sm">
+                  {player.throws || 'R'}/{player.bats || 'R'}
                 </td>
                 <td className="p-4">
                   {player.isForeign ? (
@@ -129,6 +134,21 @@ export default function Teams() {
                   ) : (
                     <span className="text-zinc-500 text-xs font-medium uppercase tracking-wider">本土</span>
                   )}
+                </td>
+                <td className="p-4 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <div className="w-12 bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                      <div 
+                        className={cn(
+                          "h-full rounded-full",
+                          (player.energy ?? 100) > 70 ? "bg-emerald-500" :
+                          (player.energy ?? 100) > 30 ? "bg-yellow-500" : "bg-red-500"
+                        )}
+                        style={{ width: `${player.energy ?? 100}%` }}
+                      ></div>
+                    </div>
+                    <span className="font-mono text-xs text-zinc-400 w-6">{player.energy ?? 100}</span>
+                  </div>
                 </td>
                 <td className="p-4 text-right font-mono text-sm">{renderStat(getEffectiveStat(player, 'contact'))}</td>
                 <td className="p-4 text-right font-mono text-sm">{renderStat(getEffectiveStat(player, 'power'))}</td>

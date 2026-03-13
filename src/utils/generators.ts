@@ -71,14 +71,34 @@ export function generatePlayers(): Player[] {
         : LAST_NAMES[randomInt(0, LAST_NAMES.length - 1)] + FIRST_NAMES[randomInt(0, FIRST_NAMES.length - 1)];
 
       const isPitcher = pos === 'P';
+      const throws = randomInt(1, 100) > 25 ? 'R' : 'L';
+      const bats = randomInt(1, 100) > 70 ? (randomInt(1, 100) > 50 ? 'L' : 'S') : 'R';
       
+      let pitcherRole: 'SP' | 'RP' | 'CP' | undefined;
+      let stamina = randomInt(40, 99);
+      let velocity = randomInt(130, 160);
+      
+      if (isPitcher) {
+        if (stamina > 75) {
+          pitcherRole = 'SP';
+        } else if (stamina < 55 && velocity > 145) {
+          pitcherRole = 'CP';
+        } else {
+          pitcherRole = 'RP';
+        }
+      }
+
       const p: Player = {
         id: `P${playerId++}`,
         teamId: team.id,
         name,
         position: pos,
+        pitcherRole,
         isForeign,
         age: randomInt(18, 38),
+        energy: 100,
+        throws,
+        bats,
         status: index < 28 ? 'active' : 'reserve', // First 28 are active
         stats: {
           contact: randomInt(30, 99),
@@ -87,9 +107,9 @@ export function generatePlayers(): Player[] {
           fielding: randomInt(40, 99),
           ...(isPitcher ? {
             pitching: {
-              velocity: randomInt(130, 160),
+              velocity,
               control: randomInt(40, 99),
-              stamina: randomInt(40, 99),
+              stamina,
               breaking: randomInt(40, 99)
             }
           } : {})

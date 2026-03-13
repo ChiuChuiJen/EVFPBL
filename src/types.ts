@@ -21,14 +21,20 @@ export interface Team {
 }
 
 export type Position = 'P' | 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF';
+export type PitcherRole = 'SP' | 'RP' | 'CP';
+export type Handedness = 'L' | 'R' | 'S';
 
 export interface Player {
   id: string;
   teamId: string;
   name: string;
   position: Position;
+  pitcherRole?: PitcherRole;
   isForeign: boolean;
   age: number;
+  energy: number;
+  throws: Handedness;
+  bats: Handedness;
   stats: {
     contact: number;
     power: number;

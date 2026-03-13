@@ -185,6 +185,30 @@ export const useGameStore = create<GameState>((set, get) => ({
       const isNewDay = newDate.getDate() !== state.currentDate.getDate();
       const isMonday = newDate.getDay() === 1;
 
+      if (isNewDay) {
+        newPlayers = newPlayers.map(p => {
+          // Migration for existing players
+          const throws = p.throws || (Math.random() > 0.25 ? 'R' : 'L');
+          const bats = p.bats || (Math.random() > 0.7 ? (Math.random() > 0.5 ? 'L' : 'S') : 'R');
+          let pitcherRole = p.pitcherRole;
+          if (p.position === 'P' && !pitcherRole) {
+            const stamina = p.stats.pitching?.stamina || 50;
+            const velocity = p.stats.pitching?.velocity || 130;
+            if (stamina > 75) pitcherRole = 'SP';
+            else if (stamina < 55 && velocity > 145) pitcherRole = 'CP';
+            else pitcherRole = 'RP';
+          }
+
+          return {
+            ...p,
+            throws,
+            bats,
+            pitcherRole,
+            energy: Math.min(100, (p.energy ?? 100) + (p.status === 'injured' ? 5 : 15))
+          };
+        });
+      }
+
       // Check for games to simulate
       const gamesToSimulate = state.schedule.filter(g => 
         g.status === 'scheduled' && 
@@ -533,30 +557,41 @@ export const useGameStore = create<GameState>((set, get) => ({
           const stats = p[statKey];
           if (!stats) return p;
           
+          let energyCost = 0;
+          let updatedStats = { ...stats };
+
           if (p.id === winningPitcherId) {
-            return { ...p, [statKey]: { ...stats, wins: stats.wins + 1, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 6, strikeouts: stats.strikeouts + Math.floor(Math.random() * 8) + 2 } };
-          }
-          if (p.id === losingPitcherId) {
-            return { ...p, [statKey]: { ...stats, losses: stats.losses + 1, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 5, strikeouts: stats.strikeouts + Math.floor(Math.random() * 5) + 1 } };
-          }
-          if (p.id === mvpId) {
-            return { ...p, [statKey]: { ...stats, gamesPlayed: stats.gamesPlayed + 1, atBats: stats.atBats + 4, hits: stats.hits + Math.floor(Math.random() * 3) + 2, homeRuns: stats.homeRuns + (Math.random() > 0.7 ? 1 : 0), rbi: stats.rbi + Math.floor(Math.random() * 4) + 1 } };
-          }
-          
-          // Random stats for other active players in this game
-          if (homeActivePlayers.find(hp => hp.id === p.id) || awayActivePlayers.find(ap => ap.id === p.id)) {
+            energyCost = p.pitcherRole === 'SP' ? 40 : 20;
+            updatedStats = { ...stats, wins: stats.wins + 1, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 6, strikeouts: stats.strikeouts + Math.floor(Math.random() * 8) + 2 };
+          } else if (p.id === losingPitcherId) {
+            energyCost = p.pitcherRole === 'SP' ? 40 : 20;
+            updatedStats = { ...stats, losses: stats.losses + 1, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 5, strikeouts: stats.strikeouts + Math.floor(Math.random() * 5) + 1 };
+          } else if (p.id === mvpId) {
+            energyCost = p.position === 'P' ? (p.pitcherRole === 'SP' ? 40 : 20) : 15;
+            updatedStats = { ...stats, gamesPlayed: stats.gamesPlayed + 1, atBats: stats.atBats + 4, hits: stats.hits + Math.floor(Math.random() * 3) + 2, homeRuns: stats.homeRuns + (Math.random() > 0.7 ? 1 : 0), rbi: stats.rbi + Math.floor(Math.random() * 4) + 1 };
+          } else if (homeActivePlayers.find(hp => hp.id === p.id) || awayActivePlayers.find(ap => ap.id === p.id)) {
+            // Random stats for other active players in this game
             if (p.position === 'P') {
-              return { ...p, [statKey]: { ...stats, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 1, strikeouts: stats.strikeouts + Math.floor(Math.random() * 2) } };
+              energyCost = p.pitcherRole === 'SP' ? 30 : 15;
+              updatedStats = { ...stats, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 1, strikeouts: stats.strikeouts + Math.floor(Math.random() * 2) };
             } else {
+              energyCost = 10;
               const ab = Math.floor(Math.random() * 2) + 3;
               const hits = Math.floor(Math.random() * 3);
               const hr = Math.random() > 0.9 ? 1 : 0;
               const rbi = hr > 0 ? Math.floor(Math.random() * 3) + 1 : (hits > 0 ? Math.floor(Math.random() * 2) : 0);
               const sb = Math.random() > 0.9 ? 1 : 0;
-              return { ...p, [statKey]: { ...stats, gamesPlayed: stats.gamesPlayed + 1, atBats: stats.atBats + ab, hits: stats.hits + hits, homeRuns: stats.homeRuns + hr, rbi: stats.rbi + rbi, stolenBases: stats.stolenBases + sb } };
+              updatedStats = { ...stats, gamesPlayed: stats.gamesPlayed + 1, atBats: stats.atBats + ab, hits: stats.hits + hits, homeRuns: stats.homeRuns + hr, rbi: stats.rbi + rbi, stolenBases: stats.stolenBases + sb };
             }
+          } else {
+            return p; // Did not play
           }
-          return p;
+          
+          return {
+            ...p,
+            energy: Math.max(0, (p.energy ?? 100) - energyCost),
+            [statKey]: updatedStats
+          };
         };
 
         if (game.type === 'regular') {
