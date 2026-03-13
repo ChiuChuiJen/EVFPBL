@@ -46,16 +46,16 @@ export default function Schedule() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-zinc-100 tracking-tight">賽程 Schedule</h2>
-          <p className="text-zinc-500 mt-1">檢視每週賽事安排與結果</p>
+          <h2 className="text-4xl font-black text-zinc-100 tracking-tight">賽程 Schedule</h2>
+          <p className="text-zinc-400 mt-2 text-sm font-medium">檢視每週賽事安排與結果</p>
         </div>
         
-        <div className="flex items-center gap-2 bg-zinc-900/80 border border-zinc-800/50 rounded-full p-1 shadow-inner backdrop-blur-sm">
+        <div className="flex items-center gap-2 bg-zinc-900/80 border border-zinc-800/50 rounded-2xl p-1.5 shadow-inner backdrop-blur-sm">
           <button
             onClick={() => setViewDate(addDays(viewDate, -7))}
-            className="p-2 hover:bg-zinc-800 rounded-full transition-all text-zinc-400 hover:text-zinc-100 active:scale-95"
+            className="p-2 hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-zinc-100 active:scale-95"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -64,7 +64,7 @@ export default function Schedule() {
           </span>
           <button
             onClick={() => setViewDate(addDays(viewDate, 7))}
-            className="p-2 hover:bg-zinc-800 rounded-full transition-all text-zinc-400 hover:text-zinc-100 active:scale-95"
+            className="p-2 hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-zinc-100 active:scale-95"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -78,21 +78,22 @@ export default function Schedule() {
 
           return (
             <div key={day.toISOString()} className={cn(
-              "bg-zinc-900/40 border rounded-2xl overflow-hidden flex flex-col h-[650px] backdrop-blur-sm transition-all",
-              isToday ? "border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20" : "border-zinc-800/50"
+              "bg-zinc-900/40 border rounded-3xl overflow-hidden flex flex-col h-[650px] backdrop-blur-md transition-all relative group",
+              isToday ? "border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20 z-10 scale-[1.02]" : "border-zinc-800/50 hover:border-zinc-700/50"
             )}>
+              {isToday && <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent pointer-events-none"></div>}
               <div className={cn(
-                "p-4 text-center border-b font-medium",
+                "p-5 text-center border-b font-medium relative z-10",
                 isToday ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-zinc-950/80 text-zinc-400 border-zinc-800/50"
               )}>
-                <div className="text-xs uppercase tracking-widest font-bold mb-1">{format(day, 'EEE')}</div>
-                <div className="text-2xl font-black font-mono">{format(day, 'MM/dd')}</div>
+                <div className="text-[10px] uppercase tracking-widest font-black mb-1 opacity-80">{format(day, 'EEE')}</div>
+                <div className="text-3xl font-black font-mono tracking-tighter">{format(day, 'MM/dd')}</div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar relative z-10">
                 {dayGames.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-zinc-600 text-sm py-8 border-2 border-dashed border-zinc-800/50 rounded-xl bg-zinc-900/20">
-                    <span className="font-medium">無賽程</span>
+                  <div className="flex flex-col items-center justify-center h-full text-zinc-600 text-sm py-8 border-2 border-dashed border-zinc-800/50 rounded-2xl bg-zinc-900/20">
+                    <span className="font-bold tracking-widest uppercase text-[10px]">無賽程</span>
                   </div>
                 ) : (
                   dayGames.map(game => {
@@ -103,38 +104,43 @@ export default function Schedule() {
                       <button 
                         key={game.id} 
                         onClick={() => setSelectedGameId(game.id)}
-                        className="w-full text-left bg-zinc-950/80 border border-zinc-800/60 rounded-xl p-4 text-sm flex flex-col gap-3 hover:bg-zinc-900 hover:border-zinc-700 transition-all cursor-pointer group shadow-sm"
+                        className="w-full text-left bg-zinc-950/80 border border-zinc-800/60 rounded-2xl p-5 text-sm flex flex-col gap-4 hover:bg-zinc-900 hover:border-zinc-700 transition-all cursor-pointer group/card shadow-sm relative overflow-hidden"
                       >
-                        <div className="flex justify-between items-center text-xs text-zinc-500">
-                          <span className="font-bold tracking-wider uppercase">{game.league}</span>
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity pointer-events-none"></div>
+                        <div className="flex justify-between items-center text-[10px] text-zinc-500 font-black uppercase tracking-widest relative z-10">
+                          <span className="text-zinc-400">{game.league}</span>
                           <span className={cn(
-                            "px-2 py-0.5 rounded font-mono font-bold",
-                            game.status === 'finished' ? "bg-zinc-800 text-zinc-400" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            "px-2.5 py-1 rounded-md font-mono",
+                            game.status === 'finished' ? "bg-zinc-800/50 text-zinc-500 border border-zinc-700/50" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
                           )}>
                             {game.status === 'finished' ? 'FINAL' : format(parseISO(game.date), 'HH:mm')}
                           </span>
                         </div>
                         
-                        <div className="space-y-2">
+                        <div className="space-y-3 relative z-10">
                           <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2 overflow-hidden">
-                              <TeamLogo teamId={game.awayTeamId} className="w-4 h-4 flex-shrink-0" />
-                              <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{getTeamName(game.awayTeamId, away)}</span>
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="w-6 h-6 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-inner flex-shrink-0">
+                                <TeamLogo teamId={game.awayTeamId} className="w-4 h-4" />
+                              </div>
+                              <span className="font-bold text-zinc-300 truncate group-hover/card:text-white transition-colors text-base tracking-tight">{getTeamName(game.awayTeamId, away)}</span>
                             </div>
                             <span className={cn(
-                              "font-mono font-bold text-lg",
-                              game.status === 'finished' && game.awayScore > game.homeScore ? "text-zinc-100" : "text-zinc-500"
+                              "font-mono font-black text-xl",
+                              game.status === 'finished' && game.awayScore > game.homeScore ? "text-zinc-100" : "text-zinc-600"
                             )}>{game.status === 'finished' ? game.awayScore : '-'}</span>
                           </div>
                           
                           <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2 overflow-hidden">
-                              <TeamLogo teamId={game.homeTeamId} className="w-4 h-4 flex-shrink-0" />
-                              <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{getTeamName(game.homeTeamId, home)}</span>
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="w-6 h-6 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-inner flex-shrink-0">
+                                <TeamLogo teamId={game.homeTeamId} className="w-4 h-4" />
+                              </div>
+                              <span className="font-bold text-zinc-300 truncate group-hover/card:text-white transition-colors text-base tracking-tight">{getTeamName(game.homeTeamId, home)}</span>
                             </div>
                             <span className={cn(
-                              "font-mono font-bold text-lg",
-                              game.status === 'finished' && game.homeScore > game.awayScore ? "text-zinc-100" : "text-zinc-500"
+                              "font-mono font-black text-xl",
+                              game.status === 'finished' && game.homeScore > game.awayScore ? "text-zinc-100" : "text-zinc-600"
                             )}>{game.status === 'finished' ? game.homeScore : '-'}</span>
                           </div>
                         </div>

@@ -26,18 +26,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-50 flex flex-col font-sans selection:bg-emerald-500/30">
       {/* Top Bar for Time Controls */}
-      <header className="bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800/50 p-4 flex items-center justify-between sticky top-0 z-50">
+      <header className="bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/60 p-4 flex items-center justify-between sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <span className="font-black text-zinc-950 text-sm tracking-tighter">EV</span>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-400/20">
+              <span className="font-black text-zinc-950 text-base tracking-tighter">EV</span>
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-zinc-100">EVFPBL <span className="text-zinc-500 font-medium text-sm ml-1">Simulator</span></h1>
+            <h1 className="text-2xl font-black tracking-tight text-zinc-100">EVFPBL <span className="text-zinc-500 font-medium text-sm ml-1 tracking-normal">Simulator</span></h1>
           </div>
-          <div className="h-6 w-px bg-zinc-800"></div>
-          <div className="flex items-center gap-2 bg-zinc-900/80 border border-zinc-800/50 px-4 py-2 rounded-full shadow-inner">
+          <div className="h-8 w-px bg-zinc-800/80"></div>
+          <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800/60 px-5 py-2.5 rounded-2xl shadow-inner">
             <Clock className="w-4 h-4 text-emerald-500" />
-            <span className="font-mono text-sm font-medium tracking-wide text-zinc-300">
+            <span className="font-mono text-sm font-bold tracking-widest text-zinc-300">
               {format(currentDate, 'yyyy-MM-dd HH:mm')}
             </span>
           </div>
@@ -46,35 +46,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-3">
           <button
             onClick={() => advanceTime(30)}
-            className="p-2.5 rounded-full transition-all text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 active:scale-95"
+            className="p-3 rounded-xl transition-all text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 active:scale-95 border border-transparent hover:border-zinc-700/50"
             title="+30 分鐘"
           >
-            <FastForward className="w-4 h-4" />
+            <FastForward className="w-5 h-5" />
           </button>
           
           <button
             onClick={togglePlay}
             className={cn(
-              "p-2.5 rounded-full transition-all flex items-center justify-center shadow-lg active:scale-95",
+              "p-3 rounded-xl transition-all flex items-center justify-center shadow-lg active:scale-95",
               isPlaying 
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30" 
-                : "bg-zinc-100 text-zinc-900 hover:bg-white"
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]" 
+                : "bg-zinc-100 text-zinc-900 hover:bg-white border border-zinc-200"
             )}
             title={isPlaying ? '暫停' : '自動模擬'}
           >
-            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </button>
 
-          <div className="flex bg-zinc-900/80 border border-zinc-800/50 rounded-full overflow-hidden ml-2 p-0.5 shadow-inner">
+          <div className="flex bg-zinc-900/80 border border-zinc-800/60 rounded-xl overflow-hidden ml-2 p-1 shadow-inner">
             {[1, 5, 24].map((mult) => (
               <button
                 key={mult}
                 onClick={() => setMultiplier(mult)}
                 className={cn(
-                  "px-3 py-1.5 text-xs font-mono font-medium transition-all rounded-full",
+                  "px-4 py-2 text-xs font-mono font-bold transition-all rounded-lg",
                   timeMultiplier === mult 
                     ? "bg-zinc-700 text-zinc-100 shadow-sm" 
-                    : "text-zinc-500 hover:text-zinc-300"
+                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
                 )}
               >
                 {mult}x
@@ -84,7 +84,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           <button
             onClick={advanceToNextDay}
-            className="ml-2 px-4 py-2 bg-zinc-900/80 border border-zinc-800/50 hover:bg-zinc-800 hover:border-zinc-700 rounded-full transition-all text-zinc-300 flex items-center gap-2 text-sm font-medium active:scale-95 shadow-sm"
+            className="ml-3 px-5 py-2.5 bg-zinc-900/80 border border-zinc-800/60 hover:bg-zinc-800 hover:border-zinc-700 rounded-xl transition-all text-zinc-300 flex items-center gap-2 text-sm font-bold active:scale-95 shadow-sm"
           >
             <SkipForward className="w-4 h-4 text-zinc-400" />
             <span>下一日</span>
@@ -95,8 +95,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Navigation */}
-        <aside className="w-72 bg-zinc-950 border-r border-zinc-800/50 flex flex-col relative z-40">
-          <div className="p-4 flex flex-col gap-1.5">
+        <aside className="w-72 bg-zinc-950 border-r border-zinc-800/60 flex flex-col relative z-40 shadow-xl">
+          <div className="p-5 flex flex-col gap-2">
             <NavButton href="#dashboard" label="總覽 Dashboard" />
             <NavButton href="#standings" label="戰績 Standings" />
             <NavButton href="#teams" label="球隊 Teams" />
@@ -172,14 +172,16 @@ function NavButton({ href, label }: { href: string; label: string }) {
     <a
       href={href}
       className={cn(
-        "px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3",
+        "px-5 py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-between group",
         isActive 
-          ? "bg-zinc-900 text-zinc-100 shadow-sm border border-zinc-800/60" 
-          : "text-zinc-500 hover:bg-zinc-900/50 hover:text-zinc-300 border border-transparent"
+          ? "bg-zinc-900 text-zinc-100 shadow-sm border border-zinc-800" 
+          : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border border-transparent"
       )}
     >
-      <div className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "bg-transparent")} />
-      {label}
+      <span className="tracking-wide">{label}</span>
+      {isActive && (
+        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse"></div>
+      )}
     </a>
   );
 }

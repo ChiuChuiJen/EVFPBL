@@ -85,39 +85,40 @@ export default function Teams() {
   };
 
   const renderPlayerTable = (title: string, playerList: Player[], colorClass: string = "bg-emerald-500") => (
-    <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl overflow-hidden mb-8 backdrop-blur-sm shadow-sm">
-      <div className="p-5 border-b border-zinc-800/60 bg-zinc-950/80 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className={cn("w-2 h-6 rounded-full", colorClass)}></span>
-          <h3 className="text-lg font-bold text-zinc-100">{title}</h3>
+    <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-3xl overflow-hidden mb-10 backdrop-blur-md shadow-xl relative group">
+      <div className="absolute top-0 right-0 w-96 h-96 bg-zinc-800/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity group-hover:opacity-100 opacity-50"></div>
+      <div className="p-8 border-b border-zinc-800/60 bg-zinc-950/80 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-5">
+          <span className={cn("w-2 h-10 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.1)]", colorClass)}></span>
+          <h3 className="text-2xl font-black text-zinc-100 tracking-tight">{title}</h3>
         </div>
-        <span className="text-sm font-mono font-bold text-zinc-400 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800/60">{playerList.length} 人</span>
+        <span className="text-base font-mono font-black text-zinc-400 bg-zinc-900 px-5 py-2 rounded-xl border border-zinc-800/60 shadow-inner">{playerList.length} 人</span>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative z-10">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-zinc-900/60 text-zinc-500 text-xs font-bold uppercase tracking-widest border-b border-zinc-800/60">
-              <th className="p-4 pl-6 font-medium">姓名</th>
-              <th className="p-4 font-medium">年齡</th>
-              <th className="p-4 font-medium">守位</th>
-              <th className="p-4 font-medium">投/打</th>
-              <th className="p-4 font-medium">身分</th>
-              <th className="p-4 font-medium text-right">體力</th>
-              <th className="p-4 font-medium text-right">打擊</th>
-              <th className="p-4 font-medium text-right">力量</th>
-              <th className="p-4 font-medium text-right">速度</th>
-              <th className="p-4 font-medium text-right">守備</th>
-              <th className="p-4 pr-6 font-medium text-right">操作</th>
+            <tr className="bg-zinc-950/60 text-zinc-500 text-[10px] font-black uppercase tracking-widest border-b border-zinc-800/60">
+              <th className="p-5 pl-10 font-medium">姓名</th>
+              <th className="p-5 font-medium">年齡</th>
+              <th className="p-5 font-medium">守位</th>
+              <th className="p-5 font-medium">投/打</th>
+              <th className="p-5 font-medium">身分</th>
+              <th className="p-5 font-medium text-right">體力</th>
+              <th className="p-5 font-medium text-right">打擊</th>
+              <th className="p-5 font-medium text-right">力量</th>
+              <th className="p-5 font-medium text-right">速度</th>
+              <th className="p-5 font-medium text-right">守備</th>
+              <th className="p-5 pr-10 font-medium text-right">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800/40">
             {playerList.map((player) => (
-              <tr key={player.id} onClick={() => setSelectedPlayer(player)} className="hover:bg-zinc-800/30 transition-colors group cursor-pointer">
-                <td className="p-4 pl-6 font-bold text-zinc-200 group-hover:text-zinc-100 transition-colors">{player.name}</td>
-                <td className="p-4 text-zinc-400 font-mono text-sm">{player.age}</td>
-                <td className="p-4">
+              <tr key={player.id} onClick={() => setSelectedPlayer(player)} className="hover:bg-zinc-800/60 transition-colors group/row cursor-pointer">
+                <td className="p-5 pl-10 font-black text-lg text-zinc-200 group-hover/row:text-white transition-colors tracking-tight">{player.name}</td>
+                <td className="p-5 text-zinc-500 font-mono text-base font-bold">{player.age}</td>
+                <td className="p-5">
                   <span className={cn(
-                    "px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider border",
+                    "px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border shadow-sm",
                     player.position === 'P' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
                     player.position === 'C' ? "bg-red-500/10 text-red-400 border-red-500/20" :
                     "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
@@ -125,44 +126,44 @@ export default function Teams() {
                     {player.position === 'P' ? (player.pitcherRole || 'P') : player.position}
                   </span>
                 </td>
-                <td className="p-4 text-zinc-400 font-mono text-sm">
+                <td className="p-5 text-zinc-400 font-mono text-base font-black">
                   {player.throws || 'R'}/{player.bats || 'R'}
                 </td>
-                <td className="p-4">
+                <td className="p-5">
                   {player.isForeign ? (
-                    <span className="px-2.5 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-md text-xs font-bold uppercase tracking-wider">洋將</span>
+                    <span className="px-4 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-xl text-xs font-black uppercase tracking-widest shadow-sm">洋將</span>
                   ) : (
-                    <span className="text-zinc-500 text-xs font-medium uppercase tracking-wider">本土</span>
+                    <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest">本土</span>
                   )}
                 </td>
-                <td className="p-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <div className="w-12 bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                <td className="p-5 text-right">
+                  <div className="flex items-center justify-end gap-4">
+                    <div className="w-20 bg-zinc-900 rounded-full h-2.5 overflow-hidden border border-zinc-800/50 shadow-inner">
                       <div 
                         className={cn(
-                          "h-full rounded-full",
-                          (player.energy ?? 100) > 70 ? "bg-emerald-500" :
-                          (player.energy ?? 100) > 30 ? "bg-yellow-500" : "bg-red-500"
+                          "h-full rounded-full transition-all duration-500",
+                          (player.energy ?? 100) > 70 ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" :
+                          (player.energy ?? 100) > 30 ? "bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]" : "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
                         )}
                         style={{ width: `${player.energy ?? 100}%` }}
                       ></div>
                     </div>
-                    <span className="font-mono text-xs text-zinc-400 w-6">{player.energy ?? 100}</span>
+                    <span className="font-mono text-sm font-black text-zinc-400 w-8">{player.energy ?? 100}</span>
                   </div>
                 </td>
-                <td className="p-4 text-right font-mono text-sm">{renderStat(getEffectiveStat(player, 'contact'))}</td>
-                <td className="p-4 text-right font-mono text-sm">{renderStat(getEffectiveStat(player, 'power'))}</td>
-                <td className="p-4 text-right font-mono text-sm text-zinc-400">{player.stats.speed}</td>
-                <td className="p-4 text-right font-mono text-sm">{renderStat(getEffectiveStat(player, 'fielding'))}</td>
-                <td className="p-4 pr-6 text-right" onClick={(e) => e.stopPropagation()}>
+                <td className="p-5 text-right font-mono text-base font-black">{renderStat(getEffectiveStat(player, 'contact'))}</td>
+                <td className="p-5 text-right font-mono text-base font-black">{renderStat(getEffectiveStat(player, 'power'))}</td>
+                <td className="p-5 text-right font-mono text-base font-black text-zinc-500">{player.stats.speed}</td>
+                <td className="p-5 text-right font-mono text-base font-black">{renderStat(getEffectiveStat(player, 'fielding'))}</td>
+                <td className="p-5 pr-10 text-right" onClick={(e) => e.stopPropagation()}>
                   {player.status === 'active' && (
-                    <button onClick={() => handleMove(player.id, 'reserve')} className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-md text-xs font-bold hover:bg-red-500/20 transition-all active:scale-95">降二軍</button>
+                    <button onClick={() => handleMove(player.id, 'reserve')} className="px-5 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-xs font-black hover:bg-red-500/20 transition-all active:scale-95 shadow-sm">降二軍</button>
                   )}
                   {player.status === 'reserve' && (
-                    <button onClick={() => handleMove(player.id, 'active')} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-xs font-bold hover:bg-emerald-500/20 transition-all active:scale-95">升一軍</button>
+                    <button onClick={() => handleMove(player.id, 'active')} className="px-5 py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-xs font-black hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm">升一軍</button>
                   )}
                   {player.lastMovedDate && (
-                    <div className="text-[10px] text-zinc-500 mt-1.5 font-mono">
+                    <div className="text-[10px] text-zinc-600 mt-2 font-mono font-black uppercase tracking-widest">
                       上次異動: {format(parseISO(player.lastMovedDate), 'MM/dd')}
                     </div>
                   )}
@@ -176,49 +177,50 @@ export default function Teams() {
   );
 
   const renderCoachTable = (title: string, coachList: Coach[], colorClass: string = "bg-blue-500") => (
-    <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl overflow-hidden mb-8 backdrop-blur-sm shadow-sm">
-      <div className="p-5 border-b border-zinc-800/60 bg-zinc-950/80 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className={cn("w-2 h-6 rounded-full", colorClass)}></span>
-          <h3 className="text-lg font-bold text-zinc-100">{title}</h3>
+    <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-3xl overflow-hidden mb-10 backdrop-blur-md shadow-xl relative group">
+      <div className="absolute top-0 right-0 w-96 h-96 bg-zinc-800/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity group-hover:opacity-100 opacity-50"></div>
+      <div className="p-8 border-b border-zinc-800/60 bg-zinc-950/80 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-5">
+          <span className={cn("w-2 h-10 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.1)]", colorClass)}></span>
+          <h3 className="text-2xl font-black text-zinc-100 tracking-tight">{title}</h3>
         </div>
-        <span className="text-sm font-mono font-bold text-zinc-400 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800/60">{coachList.length} 人</span>
+        <span className="text-base font-mono font-black text-zinc-400 bg-zinc-900 px-5 py-2 rounded-xl border border-zinc-800/60 shadow-inner">{coachList.length} 人</span>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative z-10">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-zinc-900/60 text-zinc-500 text-xs font-bold uppercase tracking-widest border-b border-zinc-800/60">
-              <th className="p-4 pl-6 font-medium">職位</th>
-              <th className="p-4 font-medium">姓名</th>
-              <th className="p-4 font-medium text-right">打擊增益</th>
-              <th className="p-4 font-medium text-right">力量增益</th>
-              <th className="p-4 font-medium text-right">投手增益</th>
-              <th className="p-4 font-medium text-right">守備增益</th>
-              <th className="p-4 pr-6 font-medium text-right">操作</th>
+            <tr className="bg-zinc-950/60 text-zinc-500 text-[10px] font-black uppercase tracking-widest border-b border-zinc-800/60">
+              <th className="p-5 pl-10 font-medium">職位</th>
+              <th className="p-5 font-medium">姓名</th>
+              <th className="p-5 font-medium text-right">打擊增益</th>
+              <th className="p-5 font-medium text-right">力量增益</th>
+              <th className="p-5 font-medium text-right">投手增益</th>
+              <th className="p-5 font-medium text-right">守備增益</th>
+              <th className="p-5 pr-10 font-medium text-right">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800/40">
             {coachList.map((coach) => (
-              <tr key={coach.id} className="hover:bg-zinc-800/30 transition-colors group">
-                <td className="p-4 pl-6">
-                  <span className="px-2.5 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md text-xs font-bold tracking-wider">
+              <tr key={coach.id} className="hover:bg-zinc-800/60 transition-colors group/row">
+                <td className="p-5 pl-10">
+                  <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-black tracking-widest shadow-sm">
                     {getRoleName(coach.role)}
                   </span>
                 </td>
-                <td className="p-4 font-bold text-zinc-200 group-hover:text-zinc-100 transition-colors">{coach.name}</td>
-                <td className="p-4 text-right font-mono text-sm font-medium text-emerald-400">+{coach.boosts.contact}</td>
-                <td className="p-4 text-right font-mono text-sm font-medium text-emerald-400">+{coach.boosts.power}</td>
-                <td className="p-4 text-right font-mono text-sm font-medium text-emerald-400">+{coach.boosts.pitching}</td>
-                <td className="p-4 text-right font-mono text-sm font-medium text-emerald-400">+{coach.boosts.fielding}</td>
-                <td className="p-4 pr-6 text-right">
+                <td className="p-5 font-black text-lg text-zinc-200 group-hover/row:text-white transition-colors tracking-tight">{coach.name}</td>
+                <td className="p-5 text-right font-mono text-base font-black text-emerald-400">+{coach.boosts.contact}</td>
+                <td className="p-5 text-right font-mono text-base font-black text-emerald-400">+{coach.boosts.power}</td>
+                <td className="p-5 text-right font-mono text-base font-black text-emerald-400">+{coach.boosts.pitching}</td>
+                <td className="p-5 text-right font-mono text-base font-black text-emerald-400">+{coach.boosts.fielding}</td>
+                <td className="p-5 pr-10 text-right">
                   {coach.status === 'active' && (
-                    <button onClick={() => handleCoachMove(coach.id, 'reserve')} className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-md text-xs font-bold hover:bg-red-500/20 transition-all active:scale-95">降二軍</button>
+                    <button onClick={() => handleCoachMove(coach.id, 'reserve')} className="px-5 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-xs font-black hover:bg-red-500/20 transition-all active:scale-95 shadow-sm">降二軍</button>
                   )}
                   {coach.status === 'reserve' && (
-                    <button onClick={() => handleCoachMove(coach.id, 'active')} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-xs font-bold hover:bg-emerald-500/20 transition-all active:scale-95">升一軍</button>
+                    <button onClick={() => handleCoachMove(coach.id, 'active')} className="px-5 py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-xs font-black hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm">升一軍</button>
                   )}
                   {coach.lastMovedDate && (
-                    <div className="text-[10px] text-zinc-500 mt-1.5 font-mono">
+                    <div className="text-[10px] text-zinc-600 mt-2 font-mono font-black uppercase tracking-widest">
                       上次異動: {format(parseISO(coach.lastMovedDate), 'MM/dd')}
                     </div>
                   )}
@@ -244,46 +246,52 @@ export default function Teams() {
       )}
 
       <div>
-        <h2 className="text-3xl font-black text-zinc-100 tracking-tight">球隊 Teams</h2>
-        <p className="text-zinc-500 mt-1">管理球隊陣容與教練團</p>
+        <h2 className="text-4xl font-black text-zinc-100 tracking-tight">球隊 Teams</h2>
+        <p className="text-zinc-400 mt-2 text-sm font-medium">管理球隊陣容與教練團</p>
       </div>
       
-      <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+      <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar snap-x px-2">
         {teams.map(team => (
           <button
             key={team.id}
             onClick={() => setSelectedTeamId(team.id)}
             className={cn(
-              "flex-shrink-0 px-6 py-4 rounded-2xl border transition-all flex flex-col items-center gap-3 min-w-[140px] group",
+              "flex-shrink-0 px-10 py-8 rounded-3xl border transition-all duration-300 flex flex-col items-center gap-5 min-w-[200px] group snap-start relative overflow-hidden",
               selectedTeamId === team.id 
-                ? "bg-zinc-900 border-zinc-700 shadow-lg scale-105" 
-                : "bg-zinc-900/40 border-zinc-800/50 hover:bg-zinc-900/80 hover:border-zinc-700/50 text-zinc-400"
+                ? "bg-zinc-900 border-zinc-700 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] scale-105 z-10 ring-1 ring-white/10" 
+                : "bg-zinc-900/30 border-zinc-800/40 hover:bg-zinc-900/60 hover:border-zinc-700/50 text-zinc-400 hover:shadow-xl"
             )}
           >
-            <div className="w-10 h-10 rounded-full shadow-inner border border-zinc-800/50 flex items-center justify-center bg-zinc-900/80">
-              <TeamLogo teamId={team.id} className="w-6 h-6" />
+            {selectedTeamId === team.id && (
+              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+            )}
+            <div className={cn(
+              "w-24 h-24 rounded-[2rem] shadow-inner border flex items-center justify-center transition-all duration-300",
+              selectedTeamId === team.id ? "bg-zinc-800 border-zinc-600 shadow-[0_0_30px_rgba(0,0,0,0.6)]" : "bg-zinc-900/80 border-zinc-800/50 group-hover:bg-zinc-800/80 group-hover:border-zinc-700/50"
+            )}>
+              <TeamLogo teamId={team.id} className={cn("transition-transform duration-300", selectedTeamId === team.id ? "w-16 h-16 scale-110" : "w-14 h-14 group-hover:scale-105")} />
             </div>
-            <div className="text-center">
-              <div className={cn("font-bold text-sm tracking-wide transition-colors", selectedTeamId === team.id ? "text-zinc-100" : "group-hover:text-zinc-200")}>{team.name}</div>
-              <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-0.5">{team.league}</div>
+            <div className="text-center relative z-10">
+              <div className={cn("font-black text-2xl tracking-tight transition-colors duration-300", selectedTeamId === team.id ? "text-zinc-100" : "group-hover:text-zinc-200")}>{team.name}</div>
+              <div className={cn("text-xs font-black uppercase tracking-widest mt-2 transition-opacity duration-300", selectedTeamId === team.id ? "opacity-80 text-zinc-300" : "opacity-50 group-hover:opacity-70")}>{team.league}</div>
             </div>
           </button>
         ))}
       </div>
 
       {selectedTeam && (
-        <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="flex items-end gap-5">
-              <div className="w-20 h-20 rounded-3xl shadow-xl border border-zinc-800/50 flex-shrink-0 flex items-center justify-center bg-zinc-900/80">
-                <TeamLogo teamId={selectedTeam.id} className="w-14 h-14" />
+        <div className="mt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div className="flex items-end gap-6">
+              <div className="w-24 h-24 rounded-3xl shadow-xl border border-zinc-800/50 flex-shrink-0 flex items-center justify-center bg-zinc-900/80">
+                <TeamLogo teamId={selectedTeam.id} className="w-16 h-16" />
               </div>
               <div>
-                <h2 className="text-4xl font-black text-zinc-100 tracking-tight">{selectedTeam.name}</h2>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-zinc-400 font-medium">{selectedTeam.state} {selectedTeam.city}</span>
-                  <span className="w-1 h-1 rounded-full bg-zinc-700"></span>
-                  <span className="text-zinc-400 font-medium uppercase tracking-wider">{selectedTeam.league} 聯盟</span>
+                <h2 className="text-5xl font-black text-zinc-100 tracking-tight">{selectedTeam.name}</h2>
+                <div className="flex items-center gap-4 mt-3">
+                  <span className="text-zinc-400 font-bold text-lg">{selectedTeam.state} {selectedTeam.city}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span>
+                  <span className="text-zinc-400 font-black uppercase tracking-wider text-lg">{selectedTeam.league} 聯盟</span>
                 </div>
               </div>
             </div>
@@ -293,33 +301,34 @@ export default function Teams() {
                 setToast({ message: result.message || '', type: result.success ? 'success' : 'error' });
                 setTimeout(() => setToast(null), 3000);
               }}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black flex items-center gap-3 transition-all shadow-lg shadow-blue-900/20 active:scale-95 text-sm"
             >
-              <Users className="w-4 h-4" />
+              <Users className="w-5 h-5" />
               交由教練團自動調整一二軍
             </button>
           </div>
 
           {/* Stadium Info */}
-          <div className="mb-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-5 backdrop-blur-sm">
-              <div className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2"><Building2 className="w-4 h-4 text-zinc-400"/> 主場</div>
-              <div className="font-bold text-lg text-zinc-200">{selectedTeam.stadium.name}</div>
-              <div className="text-sm font-medium text-zinc-500 mt-1">{getStadiumTypeName(selectedTeam.stadium.type)}</div>
+          <div className="mb-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-3xl p-8 backdrop-blur-sm shadow-xl hover:bg-zinc-900/60 transition-all duration-300 group hover:-translate-y-1">
+              <div className="text-zinc-500 text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2"><Building2 className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300 transition-colors"/> 主場</div>
+              <div className="font-black text-3xl text-zinc-200 tracking-tight group-hover:text-white transition-colors">{selectedTeam.stadium.name}</div>
+              <div className="text-lg font-bold text-zinc-500 mt-2">{getStadiumTypeName(selectedTeam.stadium.type)}</div>
             </div>
-            <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-5 backdrop-blur-sm">
-              <div className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2"><Users className="w-4 h-4 text-zinc-400"/> 滿場人數</div>
-              <div className="font-bold text-lg text-zinc-200 font-mono">{selectedTeam.stadium.capacity.toLocaleString()} <span className="text-sm font-sans font-medium text-zinc-500">人</span></div>
+            <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-3xl p-8 backdrop-blur-sm shadow-xl hover:bg-zinc-900/60 transition-all duration-300 group hover:-translate-y-1">
+              <div className="text-zinc-500 text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300 transition-colors"/> 滿場人數</div>
+              <div className="font-black text-4xl text-zinc-200 font-mono tracking-tighter group-hover:text-white transition-colors">{selectedTeam.stadium.capacity.toLocaleString()} <span className="text-base font-sans font-bold text-zinc-500 tracking-normal">人</span></div>
             </div>
-            <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-5 backdrop-blur-sm">
-              <div className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2"><CloudRain className="w-4 h-4 text-zinc-400"/> 天氣影響程度</div>
-              <div className="font-bold text-lg text-zinc-200">
+            <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-3xl p-8 backdrop-blur-sm shadow-xl hover:bg-zinc-900/60 transition-all duration-300 group hover:-translate-y-1">
+              <div className="text-zinc-500 text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2"><CloudRain className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300 transition-colors"/> 天氣影響程度</div>
+              <div className="font-black text-3xl text-zinc-200 group-hover:text-white transition-colors">
                 {selectedTeam.stadium.weatherImpact === 0 ? '無影響 (室內)' : 
                  selectedTeam.stadium.weatherImpact < 0.5 ? '低' : 
                  selectedTeam.stadium.weatherImpact < 0.8 ? '中' : '高'}
               </div>
-              <div className="w-full bg-zinc-950 rounded-full h-2 mt-3 border border-zinc-800/50 overflow-hidden">
-                <div className="bg-gradient-to-r from-emerald-500 to-blue-500 h-full rounded-full" style={{ width: `${selectedTeam.stadium.weatherImpact * 100}%` }}></div>
+              <div className="w-full bg-zinc-950 rounded-full h-3 mt-5 border border-zinc-800/50 overflow-hidden shadow-inner relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-blue-500/20"></div>
+                <div className="bg-gradient-to-r from-emerald-500 to-blue-500 h-full rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)] relative z-10 transition-all duration-1000 ease-out" style={{ width: `${selectedTeam.stadium.weatherImpact * 100}%` }}></div>
               </div>
             </div>
           </div>

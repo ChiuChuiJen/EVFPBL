@@ -512,21 +512,93 @@ export const useGameStore = create<GameState>((set, get) => ({
         const isTie = homeTotal === awayTotal;
         const isHomeWin = homeTotal > awayTotal;
         
-        const homePitchers = homeTeamPlayers.filter(p => p.position === 'P');
-        const awayPitchers = awayTeamPlayers.filter(p => p.position === 'P');
+        // Determine participating players
+        interface GameStats {
+          inningsPitched?: number;
+          atBats?: number;
+          hits?: number;
+          homeRuns?: number;
+          rbi?: number;
+          stolenBases?: number;
+          strikeouts?: number;
+          energyCost: number;
+        }
+        const gamePlayerStats = new Map<string, GameStats>();
+
+        const determineParticipants = (teamId: string, isHome: boolean, runsScored: number) => {
+          const teamPlayers = isHome ? homeActivePlayers : awayActivePlayers;
+          const pitchers = teamPlayers.filter(p => p.position === 'P').sort((a, b) => (b.energy ?? 100) - (a.energy ?? 100));
+          const batters = teamPlayers.filter(p => p.position !== 'P').sort((a, b) => (b.energy ?? 100) - (a.energy ?? 100));
+
+          // Pitching
+          let starter = pitchers.find(p => p.pitcherRole === 'SP') || pitchers[0];
+          let relievers = pitchers.filter(p => p.id !== starter?.id);
+          
+          let totalInnings = boxHome.length; // Usually 9, more if extra innings
+          let starterInnings = Math.min(totalInnings, Math.floor(Math.random() * 3) + 5); // 5-7 innings
+          if ((starter?.energy ?? 100) < 50) starterInnings = Math.max(1, starterInnings - 2);
+          
+          if (starter) {
+             gamePlayerStats.set(starter.id, {
+               inningsPitched: starterInnings,
+               strikeouts: Math.floor(Math.random() * starterInnings * 1.2),
+               energyCost: starterInnings * 12
+             });
+          }
+
+          let remainingInnings = totalInnings - starterInnings;
+          let currentRelieverIdx = 0;
+          while (remainingInnings > 0 && currentRelieverIdx < relievers.length) {
+             let rp = relievers[currentRelieverIdx];
+             let rpInnings = Math.min(remainingInnings, Math.floor(Math.random() * 2) + 1); // 1-2 innings
+             gamePlayerStats.set(rp.id, {
+               inningsPitched: rpInnings,
+               strikeouts: Math.floor(Math.random() * rpInnings * 1.2),
+               energyCost: rpInnings * 15
+             });
+             remainingInnings -= rpInnings;
+             currentRelieverIdx++;
+          }
+
+          // Batting
+          const lineup = batters.slice(0, 10); // 9 starters + 1 pinch hitter
+          lineup.forEach(b => {
+             const ab = Math.floor(Math.random() * 2) + 3; // 3-4 ABs
+             const hits = Math.floor(Math.random() * 3);
+             const hr = Math.random() > 0.9 ? 1 : 0;
+             const rbi = hr > 0 ? Math.floor(Math.random() * 3) + 1 : (hits > 0 ? Math.floor(Math.random() * 2) : 0);
+             const sb = Math.random() > 0.9 ? 1 : 0;
+             gamePlayerStats.set(b.id, {
+               atBats: ab,
+               hits,
+               homeRuns: hr,
+               rbi,
+               stolenBases: sb,
+               energyCost: 10
+             });
+          });
+
+          return {
+             pitchers: pitchers.filter(p => gamePlayerStats.has(p.id)),
+             batters: lineup
+          };
+        };
+
+        const homeParticipants = determineParticipants(game.homeTeamId, true, homeTotal);
+        const awayParticipants = determineParticipants(game.awayTeamId, false, awayTotal);
         
         let winningPitcherId, losingPitcherId, mvpId;
         
         if (!isTie) {
           winningPitcherId = isHomeWin 
-            ? homePitchers[Math.floor(Math.random() * homePitchers.length)]?.id 
-            : awayPitchers[Math.floor(Math.random() * awayPitchers.length)]?.id;
+            ? homeParticipants.pitchers[Math.floor(Math.random() * homeParticipants.pitchers.length)]?.id 
+            : awayParticipants.pitchers[Math.floor(Math.random() * awayParticipants.pitchers.length)]?.id;
           losingPitcherId = isHomeWin 
-            ? awayPitchers[Math.floor(Math.random() * awayPitchers.length)]?.id 
-            : homePitchers[Math.floor(Math.random() * homePitchers.length)]?.id;
+            ? awayParticipants.pitchers[Math.floor(Math.random() * awayParticipants.pitchers.length)]?.id 
+            : homeParticipants.pitchers[Math.floor(Math.random() * homeParticipants.pitchers.length)]?.id;
             
-          const winningTeamPlayers = isHomeWin ? homeTeamPlayers : awayTeamPlayers;
-          mvpId = winningTeamPlayers[Math.floor(Math.random() * winningTeamPlayers.length)]?.id;
+          const winningTeamBatters = isHomeWin ? homeParticipants.batters : awayParticipants.batters;
+          mvpId = winningTeamBatters[Math.floor(Math.random() * winningTeamBatters.length)]?.id;
         }
         
         const location = game.league === 'Minor' && homeTeam ? homeTeam.minorLeagueStadium : (homeTeam ? homeTeam.stadium.name : '聯邦大巨蛋');
@@ -557,39 +629,31 @@ export const useGameStore = create<GameState>((set, get) => ({
           const stats = p[statKey];
           if (!stats) return p;
           
-          let energyCost = 0;
-          let updatedStats = { ...stats };
+          const gameStats = gamePlayerStats.get(p.id);
+          if (!gameStats) return p; // Did not play
 
+          let updatedStats = { ...stats };
+          
+          // Apply base game stats
+          updatedStats.gamesPlayed += 1;
+          if (gameStats.inningsPitched) updatedStats.inningsPitched += gameStats.inningsPitched;
+          if (gameStats.strikeouts) updatedStats.strikeouts += gameStats.strikeouts;
+          if (gameStats.atBats) updatedStats.atBats += gameStats.atBats;
+          if (gameStats.hits) updatedStats.hits += gameStats.hits;
+          if (gameStats.homeRuns) updatedStats.homeRuns += gameStats.homeRuns;
+          if (gameStats.rbi) updatedStats.rbi += gameStats.rbi;
+          if (gameStats.stolenBases) updatedStats.stolenBases += gameStats.stolenBases;
+
+          // Apply Win/Loss
           if (p.id === winningPitcherId) {
-            energyCost = p.pitcherRole === 'SP' ? 40 : 20;
-            updatedStats = { ...stats, wins: stats.wins + 1, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 6, strikeouts: stats.strikeouts + Math.floor(Math.random() * 8) + 2 };
+            updatedStats.wins += 1;
           } else if (p.id === losingPitcherId) {
-            energyCost = p.pitcherRole === 'SP' ? 40 : 20;
-            updatedStats = { ...stats, losses: stats.losses + 1, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 5, strikeouts: stats.strikeouts + Math.floor(Math.random() * 5) + 1 };
-          } else if (p.id === mvpId) {
-            energyCost = p.position === 'P' ? (p.pitcherRole === 'SP' ? 40 : 20) : 15;
-            updatedStats = { ...stats, gamesPlayed: stats.gamesPlayed + 1, atBats: stats.atBats + 4, hits: stats.hits + Math.floor(Math.random() * 3) + 2, homeRuns: stats.homeRuns + (Math.random() > 0.7 ? 1 : 0), rbi: stats.rbi + Math.floor(Math.random() * 4) + 1 };
-          } else if (homeActivePlayers.find(hp => hp.id === p.id) || awayActivePlayers.find(ap => ap.id === p.id)) {
-            // Random stats for other active players in this game
-            if (p.position === 'P') {
-              energyCost = p.pitcherRole === 'SP' ? 30 : 15;
-              updatedStats = { ...stats, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 1, strikeouts: stats.strikeouts + Math.floor(Math.random() * 2) };
-            } else {
-              energyCost = 10;
-              const ab = Math.floor(Math.random() * 2) + 3;
-              const hits = Math.floor(Math.random() * 3);
-              const hr = Math.random() > 0.9 ? 1 : 0;
-              const rbi = hr > 0 ? Math.floor(Math.random() * 3) + 1 : (hits > 0 ? Math.floor(Math.random() * 2) : 0);
-              const sb = Math.random() > 0.9 ? 1 : 0;
-              updatedStats = { ...stats, gamesPlayed: stats.gamesPlayed + 1, atBats: stats.atBats + ab, hits: stats.hits + hits, homeRuns: stats.homeRuns + hr, rbi: stats.rbi + rbi, stolenBases: stats.stolenBases + sb };
-            }
-          } else {
-            return p; // Did not play
+            updatedStats.losses += 1;
           }
           
           return {
             ...p,
-            energy: Math.max(0, (p.energy ?? 100) - energyCost),
+            energy: Math.max(0, (p.energy ?? 100) - gameStats.energyCost),
             [statKey]: updatedStats
           };
         };
