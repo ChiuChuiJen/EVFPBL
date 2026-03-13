@@ -12,8 +12,21 @@ interface GameState {
   coaches: Coach[];
   schedule: Game[];
   standings: Record<string, StandingsRecord>;
+  minorStandings: Record<string, StandingsRecord>;
+  springStandings: Record<string, StandingsRecord>;
+  winterStandings: Record<string, StandingsRecord>;
   news: NewsItem[];
-  historicalStats: { year: number; standings: Record<string, StandingsRecord>; playerStats: Record<string, Player['seasonStats']> }[];
+  historicalStats: { 
+    year: number; 
+    standings: Record<string, StandingsRecord>; 
+    minorStandings: Record<string, StandingsRecord>;
+    springStandings: Record<string, StandingsRecord>;
+    winterStandings: Record<string, StandingsRecord>;
+    playerStats: Record<string, Player['seasonStats']>;
+    minorPlayerStats: Record<string, Player['minorStats']>;
+    springPlayerStats: Record<string, Player['springStats']>;
+    winterPlayerStats: Record<string, Player['winterStats']>;
+  }[];
   
   // Actions
   advanceTime: (minutes: number) => void;
@@ -120,6 +133,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   coaches: [],
   schedule: [],
   standings: {},
+  minorStandings: {},
+  springStandings: {},
+  winterStandings: {},
   news: [],
   historicalStats: [],
 
@@ -130,18 +146,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     // Initialize standings
     const standings: Record<string, StandingsRecord> = {};
+    const minorStandings: Record<string, StandingsRecord> = {};
+    const springStandings: Record<string, StandingsRecord> = {};
+    const winterStandings: Record<string, StandingsRecord> = {};
+    
     TEAMS.forEach(team => {
-      standings[team.id] = {
-        teamId: team.id,
-        wins: 0,
-        losses: 0,
-        ties: 0,
-        gamesPlayed: 0,
-        winPercentage: 0,
-        runsScored: 0,
-        runsAllowed: 0
+      const initRecord = {
+        teamId: team.id, wins: 0, losses: 0, ties: 0, gamesPlayed: 0, winPercentage: 0, runsScored: 0, runsAllowed: 0
       };
+      standings[team.id] = { ...initRecord };
+      minorStandings[team.id] = { ...initRecord };
+      springStandings[team.id] = { ...initRecord };
     });
+    
+    // Initialize winter league teams
+    for (let i = 1; i <= 6; i++) {
+      winterStandings[`WB_TEAM${i}`] = {
+        teamId: `WB_TEAM${i}`, wins: 0, losses: 0, ties: 0, gamesPlayed: 0, winPercentage: 0, runsScored: 0, runsAllowed: 0
+      };
+    }
 
     const news: NewsItem[] = [{
       id: 'N1',
@@ -151,7 +174,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       type: 'league'
     }];
 
-    set({ players, coaches, schedule, standings, news, historicalStats: [] });
+    set({ players, coaches, schedule, standings, minorStandings, springStandings, winterStandings, news, historicalStats: [] });
   },
 
   advanceTime: (minutes: number) => {
@@ -170,6 +193,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       let newSchedule = [...state.schedule];
       let newStandings = { ...state.standings };
+      let newMinorStandings = { ...state.minorStandings };
+      let newSpringStandings = { ...state.springStandings };
+      let newWinterStandings = { ...state.winterStandings };
       let newNews = [...state.news];
 
       // 每年 3/25 各球隊提交一軍名單 (自動調整)
@@ -187,6 +213,9 @@ export const useGameStore = create<GameState>((set, get) => ({
           type: 'league'
         });
       }
+
+      // Check if we need to resolve Minor Postseason teams (Aug 15)
+      const isMinorPostseasonStart = newDate.getMonth() === 7 && newDate.getDate() === 15 && (state.currentDate.getMonth() !== 7 || state.currentDate.getDate() !== 15);
 
       // Check if we need to resolve Postseason teams (Sept 16)
       const isPostseasonStart = newDate.getMonth() === 8 && newDate.getDate() === 16 && (state.currentDate.getMonth() !== 8 || state.currentDate.getDate() !== 16);
@@ -207,27 +236,54 @@ export const useGameStore = create<GameState>((set, get) => ({
       const isYearEnd = newDate.getMonth() === 11 && newDate.getDate() === 30 && (state.currentDate.getMonth() !== 11 || state.currentDate.getDate() !== 30);
       if (isYearEnd) {
         const playerStatsToSave: Record<string, Player['seasonStats']> = {};
+        const minorPlayerStatsToSave: Record<string, Player['minorStats']> = {};
+        const springPlayerStatsToSave: Record<string, Player['springStats']> = {};
+        const winterPlayerStatsToSave: Record<string, Player['winterStats']> = {};
+        
         newPlayers.forEach(p => {
           if (p.seasonStats) {
             playerStatsToSave[p.id] = { ...p.seasonStats };
-            // Reset player stats
-            p.seasonStats = {
-              gamesPlayed: 0, atBats: 0, hits: 0, homeRuns: 0, rbi: 0, stolenBases: 0,
-              inningsPitched: 0, earnedRuns: 0, strikeouts: 0, wins: 0, losses: 0, saves: 0
-            };
+            p.seasonStats = { gamesPlayed: 0, atBats: 0, hits: 0, homeRuns: 0, rbi: 0, stolenBases: 0, inningsPitched: 0, earnedRuns: 0, strikeouts: 0, wins: 0, losses: 0, saves: 0 };
+          }
+          if (p.minorStats) {
+            minorPlayerStatsToSave[p.id] = { ...p.minorStats };
+            p.minorStats = { gamesPlayed: 0, atBats: 0, hits: 0, homeRuns: 0, rbi: 0, stolenBases: 0, inningsPitched: 0, earnedRuns: 0, strikeouts: 0, wins: 0, losses: 0, saves: 0 };
+          }
+          if (p.springStats) {
+            springPlayerStatsToSave[p.id] = { ...p.springStats };
+            p.springStats = { gamesPlayed: 0, atBats: 0, hits: 0, homeRuns: 0, rbi: 0, stolenBases: 0, inningsPitched: 0, earnedRuns: 0, strikeouts: 0, wins: 0, losses: 0, saves: 0 };
+          }
+          if (p.winterStats) {
+            winterPlayerStatsToSave[p.id] = { ...p.winterStats };
+            p.winterStats = { gamesPlayed: 0, atBats: 0, hits: 0, homeRuns: 0, rbi: 0, stolenBases: 0, inningsPitched: 0, earnedRuns: 0, strikeouts: 0, wins: 0, losses: 0, saves: 0 };
           }
         });
 
         const newHistoricalStats = [...state.historicalStats, {
           year: state.currentDate.getFullYear(),
           standings: { ...state.standings },
-          playerStats: playerStatsToSave
+          minorStandings: { ...state.minorStandings },
+          springStandings: { ...state.springStandings },
+          winterStandings: { ...state.winterStandings },
+          playerStats: playerStatsToSave,
+          minorPlayerStats: minorPlayerStatsToSave,
+          springPlayerStats: springPlayerStatsToSave,
+          winterPlayerStats: winterPlayerStatsToSave
         }];
         newStandings = {};
+        newMinorStandings = {};
+        newSpringStandings = {};
+        newWinterStandings = {};
         TEAMS.forEach(t => {
-          newStandings[t.id] = { teamId: t.id, wins: 0, losses: 0, ties: 0, gamesPlayed: 0, winPercentage: 0, runsScored: 0, runsAllowed: 0 };
+          const initRecord = { teamId: t.id, wins: 0, losses: 0, ties: 0, gamesPlayed: 0, winPercentage: 0, runsScored: 0, runsAllowed: 0 };
+          newStandings[t.id] = { ...initRecord };
+          newMinorStandings[t.id] = { ...initRecord };
+          newSpringStandings[t.id] = { ...initRecord };
         });
-        set({ historicalStats: newHistoricalStats, standings: newStandings });
+        for (let i = 1; i <= 6; i++) {
+          newWinterStandings[`WB_TEAM${i}`] = { teamId: `WB_TEAM${i}`, wins: 0, losses: 0, ties: 0, gamesPlayed: 0, winPercentage: 0, runsScored: 0, runsAllowed: 0 };
+        }
+        set({ historicalStats: newHistoricalStats, standings: newStandings, minorStandings: newMinorStandings, springStandings: newSpringStandings, winterStandings: newWinterStandings });
       }
 
       // 每年 1/1 展開新賽程
@@ -241,6 +297,36 @@ export const useGameStore = create<GameState>((set, get) => ({
           content: `新的一年賽程已排定，各隊準備好迎接挑戰。`,
           type: 'league'
         });
+      }
+
+      if (isMinorPostseasonStart) {
+        const minorTeams = Object.values(newMinorStandings).sort((a, b) => b.winPercentage - a.winPercentage);
+        if (minorTeams.length >= 4) {
+          const mSeed1 = minorTeams[0].teamId;
+          const mSeed2 = minorTeams[1].teamId;
+          const mSeed3 = minorTeams[2].teamId;
+          const mSeed4 = minorTeams[3].teamId;
+
+          newSchedule = newSchedule.map(g => {
+            if (g.homeTeamId === 'M_SEED1') return { ...g, homeTeamId: mSeed1 };
+            if (g.awayTeamId === 'M_SEED1') return { ...g, awayTeamId: mSeed1 };
+            if (g.homeTeamId === 'M_SEED2') return { ...g, homeTeamId: mSeed2 };
+            if (g.awayTeamId === 'M_SEED2') return { ...g, awayTeamId: mSeed2 };
+            if (g.homeTeamId === 'M_SEED3') return { ...g, homeTeamId: mSeed3 };
+            if (g.awayTeamId === 'M_SEED3') return { ...g, awayTeamId: mSeed3 };
+            if (g.homeTeamId === 'M_SEED4') return { ...g, homeTeamId: mSeed4 };
+            if (g.awayTeamId === 'M_SEED4') return { ...g, awayTeamId: mSeed4 };
+            return g;
+          });
+
+          newNews.unshift({
+            id: `N_minor_postseason_start_${newDate.getFullYear()}`,
+            date: newDate.toISOString(),
+            title: `二軍季後賽名單出爐！`,
+            content: `二軍例行賽前四名將展開季後賽，爭奪二軍總冠軍！`,
+            type: 'league'
+          });
+        }
       }
 
       if (isPostseasonStart) {
@@ -366,38 +452,62 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
         
         let inning = 9;
-        while (homeTotal === awayTotal && inning < 12) {
-          const hRun = Math.random() > 0.85 ? 1 : 0;
-          const aRun = Math.random() > 0.85 ? 1 : 0;
-          boxHome.push(hRun);
-          boxAway.push(aRun);
-          homeTotal += hRun;
-          awayTotal += aRun;
-          inning++;
+        
+        if (game.type === 'minor-regular') {
+          // No extra innings in minor regular season
+        } else if (game.type === 'minor-postseason') {
+          // Tie-breaker rule: higher chance of scoring
+          while (homeTotal === awayTotal && inning < 12) {
+            const hRun = Math.random() > 0.5 ? Math.floor(Math.random() * 3) + 1 : 0;
+            const aRun = Math.random() > 0.5 ? Math.floor(Math.random() * 3) + 1 : 0;
+            boxHome.push(hRun);
+            boxAway.push(aRun);
+            homeTotal += hRun;
+            awayTotal += aRun;
+            inning++;
+          }
+        } else {
+          // Normal extra innings
+          while (homeTotal === awayTotal && inning < 12) {
+            const hRun = Math.random() > 0.85 ? 1 : 0;
+            const aRun = Math.random() > 0.85 ? 1 : 0;
+            boxHome.push(hRun);
+            boxAway.push(aRun);
+            homeTotal += hRun;
+            awayTotal += aRun;
+            inning++;
+          }
         }
         
-        if (homeTotal === awayTotal) {
+        // If still tied after 12 innings (or 9 for minor-regular), force a winner unless it's minor-regular
+        if (homeTotal === awayTotal && game.type !== 'minor-regular') {
           boxHome[boxHome.length - 1] += 1;
           homeTotal += 1;
         }
         
+        const isTie = homeTotal === awayTotal;
+        const isHomeWin = homeTotal > awayTotal;
+        
         const homePitchers = homeTeamPlayers.filter(p => p.position === 'P');
         const awayPitchers = awayTeamPlayers.filter(p => p.position === 'P');
         
-        const isHomeWin = homeTotal > awayTotal;
-        const winningPitcherId = isHomeWin 
-          ? homePitchers[Math.floor(Math.random() * homePitchers.length)]?.id 
-          : awayPitchers[Math.floor(Math.random() * awayPitchers.length)]?.id;
-        const losingPitcherId = isHomeWin 
-          ? awayPitchers[Math.floor(Math.random() * awayPitchers.length)]?.id 
-          : homePitchers[Math.floor(Math.random() * homePitchers.length)]?.id;
-          
-        const winningTeamPlayers = isHomeWin ? homeTeamPlayers : awayTeamPlayers;
-        const mvpId = winningTeamPlayers[Math.floor(Math.random() * winningTeamPlayers.length)]?.id;
+        let winningPitcherId, losingPitcherId, mvpId;
         
-        const location = homeTeam ? homeTeam.stadium.name : '聯邦大巨蛋';
+        if (!isTie) {
+          winningPitcherId = isHomeWin 
+            ? homePitchers[Math.floor(Math.random() * homePitchers.length)]?.id 
+            : awayPitchers[Math.floor(Math.random() * awayPitchers.length)]?.id;
+          losingPitcherId = isHomeWin 
+            ? awayPitchers[Math.floor(Math.random() * awayPitchers.length)]?.id 
+            : homePitchers[Math.floor(Math.random() * homePitchers.length)]?.id;
+            
+          const winningTeamPlayers = isHomeWin ? homeTeamPlayers : awayTeamPlayers;
+          mvpId = winningTeamPlayers[Math.floor(Math.random() * winningTeamPlayers.length)]?.id;
+        }
+        
+        const location = game.league === 'Minor' && homeTeam ? homeTeam.minorLeagueStadium : (homeTeam ? homeTeam.stadium.name : '聯邦大巨蛋');
         const maxCapacity = homeTeam ? homeTeam.stadium.capacity : 40000;
-        const attendance = Math.floor(Math.random() * (maxCapacity * 0.8)) + (maxCapacity * 0.2);
+        const attendance = game.league === 'Minor' ? Math.floor(Math.random() * 2000) + 500 : Math.floor(Math.random() * (maxCapacity * 0.8)) + (maxCapacity * 0.2);
 
         const updatedGame = {
           ...game,
@@ -418,34 +528,45 @@ export const useGameStore = create<GameState>((set, get) => ({
           newSchedule[index] = updatedGame;
         }
 
-        // Update player stats only for regular season
+        // Update player stats based on game type
+        const updatePlayerStats = (p: Player, statKey: 'seasonStats' | 'minorStats' | 'springStats' | 'winterStats') => {
+          const stats = p[statKey];
+          if (!stats) return p;
+          
+          if (p.id === winningPitcherId) {
+            return { ...p, [statKey]: { ...stats, wins: stats.wins + 1, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 6, strikeouts: stats.strikeouts + Math.floor(Math.random() * 8) + 2 } };
+          }
+          if (p.id === losingPitcherId) {
+            return { ...p, [statKey]: { ...stats, losses: stats.losses + 1, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 5, strikeouts: stats.strikeouts + Math.floor(Math.random() * 5) + 1 } };
+          }
+          if (p.id === mvpId) {
+            return { ...p, [statKey]: { ...stats, gamesPlayed: stats.gamesPlayed + 1, atBats: stats.atBats + 4, hits: stats.hits + Math.floor(Math.random() * 3) + 2, homeRuns: stats.homeRuns + (Math.random() > 0.7 ? 1 : 0), rbi: stats.rbi + Math.floor(Math.random() * 4) + 1 } };
+          }
+          
+          // Random stats for other active players in this game
+          if (homeActivePlayers.find(hp => hp.id === p.id) || awayActivePlayers.find(ap => ap.id === p.id)) {
+            if (p.position === 'P') {
+              return { ...p, [statKey]: { ...stats, gamesPlayed: stats.gamesPlayed + 1, inningsPitched: stats.inningsPitched + 1, strikeouts: stats.strikeouts + Math.floor(Math.random() * 2) } };
+            } else {
+              const ab = Math.floor(Math.random() * 2) + 3;
+              const hits = Math.floor(Math.random() * 3);
+              const hr = Math.random() > 0.9 ? 1 : 0;
+              const rbi = hr > 0 ? Math.floor(Math.random() * 3) + 1 : (hits > 0 ? Math.floor(Math.random() * 2) : 0);
+              const sb = Math.random() > 0.9 ? 1 : 0;
+              return { ...p, [statKey]: { ...stats, gamesPlayed: stats.gamesPlayed + 1, atBats: stats.atBats + ab, hits: stats.hits + hits, homeRuns: stats.homeRuns + hr, rbi: stats.rbi + rbi, stolenBases: stats.stolenBases + sb } };
+            }
+          }
+          return p;
+        };
+
         if (game.type === 'regular') {
-          newPlayers = newPlayers.map(p => {
-            if (p.id === winningPitcherId && p.seasonStats) {
-              return { ...p, seasonStats: { ...p.seasonStats, wins: p.seasonStats.wins + 1, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 6, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 8) + 2 } };
-            }
-            if (p.id === losingPitcherId && p.seasonStats) {
-              return { ...p, seasonStats: { ...p.seasonStats, losses: p.seasonStats.losses + 1, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 5, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 5) + 1 } };
-            }
-            if (p.id === mvpId && p.seasonStats) {
-              return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, atBats: p.seasonStats.atBats + 4, hits: p.seasonStats.hits + Math.floor(Math.random() * 3) + 2, homeRuns: p.seasonStats.homeRuns + (Math.random() > 0.7 ? 1 : 0), rbi: p.seasonStats.rbi + Math.floor(Math.random() * 4) + 1 } };
-            }
-            
-            // Random stats for other active players in this game
-            if ((homeActivePlayers.find(hp => hp.id === p.id) || awayActivePlayers.find(ap => ap.id === p.id)) && p.seasonStats) {
-              if (p.position === 'P') {
-                return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 1, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 2) } };
-              } else {
-                const ab = Math.floor(Math.random() * 2) + 3;
-                const hits = Math.floor(Math.random() * 3);
-                const hr = Math.random() > 0.9 ? 1 : 0;
-                const rbi = hr > 0 ? Math.floor(Math.random() * 3) + 1 : (hits > 0 ? Math.floor(Math.random() * 2) : 0);
-                const sb = Math.random() > 0.9 ? 1 : 0;
-                return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, atBats: p.seasonStats.atBats + ab, hits: p.seasonStats.hits + hits, homeRuns: p.seasonStats.homeRuns + hr, rbi: p.seasonStats.rbi + rbi, stolenBases: p.seasonStats.stolenBases + sb } };
-              }
-            }
-            return p;
-          });
+          newPlayers = newPlayers.map(p => updatePlayerStats(p, 'seasonStats'));
+        } else if (game.type === 'minor-regular') {
+          newPlayers = newPlayers.map(p => updatePlayerStats(p, 'minorStats'));
+        } else if (game.type === 'spring') {
+          newPlayers = newPlayers.map(p => updatePlayerStats(p, 'springStats'));
+        } else if (game.type === 'winter') {
+          newPlayers = newPlayers.map(p => updatePlayerStats(p, 'winterStats'));
         }
 
         // Random chance for injury
@@ -495,27 +616,100 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
 
         // Update standings if it's a regular or interleague game
-        if (game.type === 'regular' && newStandings[game.homeTeamId] && newStandings[game.awayTeamId]) {
-          const homeTeamRecord = newStandings[game.homeTeamId];
-          const awayTeamRecord = newStandings[game.awayTeamId];
-
-          homeTeamRecord.gamesPlayed++;
-          awayTeamRecord.gamesPlayed++;
-          homeTeamRecord.runsScored += homeTotal;
-          homeTeamRecord.runsAllowed += awayTotal;
-          awayTeamRecord.runsScored += awayTotal;
-          awayTeamRecord.runsAllowed += homeTotal;
-
-          if (homeTotal > awayTotal) {
-            homeTeamRecord.wins++;
-            awayTeamRecord.losses++;
+        const updateStandingsRecord = (standingsObj: Record<string, StandingsRecord>, teamId: string, isWin: boolean, isTie: boolean, runsScored: number, runsAllowed: number) => {
+          if (!standingsObj[teamId]) return;
+          const record = standingsObj[teamId];
+          record.gamesPlayed += 1;
+          if (isTie) {
+            record.ties += 1;
+          } else if (isWin) {
+            record.wins += 1;
           } else {
-            homeTeamRecord.losses++;
-            awayTeamRecord.wins++;
+            record.losses += 1;
           }
+          record.runsScored += runsScored;
+          record.runsAllowed += runsAllowed;
+          record.winPercentage = record.wins / (record.gamesPlayed - record.ties || 1);
+        };
 
-          homeTeamRecord.winPercentage = homeTeamRecord.wins / homeTeamRecord.gamesPlayed;
-          awayTeamRecord.winPercentage = awayTeamRecord.wins / awayTeamRecord.gamesPlayed;
+        if (game.type === 'regular') {
+          updateStandingsRecord(newStandings, game.homeTeamId, isHomeWin, isTie, homeTotal, awayTotal);
+          updateStandingsRecord(newStandings, game.awayTeamId, !isHomeWin, isTie, awayTotal, homeTotal);
+        } else if (game.type === 'minor-regular') {
+          updateStandingsRecord(newMinorStandings, game.homeTeamId, isHomeWin, isTie, homeTotal, awayTotal);
+          updateStandingsRecord(newMinorStandings, game.awayTeamId, !isHomeWin, isTie, awayTotal, homeTotal);
+        } else if (game.type === 'spring') {
+          updateStandingsRecord(newSpringStandings, game.homeTeamId, isHomeWin, isTie, homeTotal, awayTotal);
+          updateStandingsRecord(newSpringStandings, game.awayTeamId, !isHomeWin, isTie, awayTotal, homeTotal);
+        } else if (game.type === 'winter') {
+          updateStandingsRecord(newWinterStandings, game.homeTeamId, isHomeWin, isTie, homeTotal, awayTotal);
+          updateStandingsRecord(newWinterStandings, game.awayTeamId, !isHomeWin, isTie, awayTotal, homeTotal);
+        }
+
+        // Handle Minor Postseason logic
+        if (updatedGame.type === 'minor-postseason') {
+          const isRound1 = [updatedGame.homeTeamId, updatedGame.awayTeamId].some(id => id.includes('SEED3') || id.includes('SEED4'));
+          const isRound2 = [updatedGame.homeTeamId, updatedGame.awayTeamId].some(id => id.includes('WINNER_R1') || id.includes('SEED2'));
+          const targetWins = isRound1 ? 2 : 3;
+
+          const homeWins = newSchedule.filter(g => g.type === 'minor-postseason' && g.status === 'finished' && 
+            ((g.homeTeamId === updatedGame.homeTeamId && g.homeScore > g.awayScore) || 
+             (g.awayTeamId === updatedGame.homeTeamId && g.awayScore > g.homeScore)) &&
+            [g.homeTeamId, g.awayTeamId].includes(updatedGame.awayTeamId)
+          ).length;
+
+          const awayWins = newSchedule.filter(g => g.type === 'minor-postseason' && g.status === 'finished' && 
+            ((g.homeTeamId === updatedGame.awayTeamId && g.homeScore > g.awayScore) || 
+             (g.awayTeamId === updatedGame.awayTeamId && g.awayScore > g.homeScore)) &&
+            [g.homeTeamId, g.awayTeamId].includes(updatedGame.homeTeamId)
+          ).length;
+
+          if (homeWins === targetWins || awayWins === targetWins) {
+            newSchedule = newSchedule.map(g => 
+              g.type === 'minor-postseason' && g.status === 'scheduled' && 
+              [g.homeTeamId, g.awayTeamId].includes(updatedGame.homeTeamId) && 
+              [g.homeTeamId, g.awayTeamId].includes(updatedGame.awayTeamId)
+                ? { ...g, status: 'cancelled' } : g
+            );
+
+            const seriesWinner = homeWins === targetWins ? updatedGame.homeTeamId : updatedGame.awayTeamId;
+
+            if (isRound1) {
+              newSchedule = newSchedule.map(g => {
+                if (g.homeTeamId === 'M_WINNER_R1') return { ...g, homeTeamId: seriesWinner };
+                if (g.awayTeamId === 'M_WINNER_R1') return { ...g, awayTeamId: seriesWinner };
+                return g;
+              });
+              newNews.unshift({
+                id: `N_minor_postseason_r1_${updatedGame.id}`,
+                date: updatedGame.date,
+                title: `二軍季後賽首輪結束！`,
+                content: `${state.teams.find(t=>t.id===seriesWinner)?.name || seriesWinner} 晉級第二輪！`,
+                type: 'league'
+              });
+            } else if (isRound2) {
+              newSchedule = newSchedule.map(g => {
+                if (g.homeTeamId === 'M_WINNER_R2') return { ...g, homeTeamId: seriesWinner };
+                if (g.awayTeamId === 'M_WINNER_R2') return { ...g, awayTeamId: seriesWinner };
+                return g;
+              });
+              newNews.unshift({
+                id: `N_minor_postseason_r2_${updatedGame.id}`,
+                date: updatedGame.date,
+                title: `二軍季後賽第二輪結束！`,
+                content: `${state.teams.find(t=>t.id===seriesWinner)?.name || seriesWinner} 晉級二軍總冠軍戰！`,
+                type: 'league'
+              });
+            } else {
+              newNews.unshift({
+                id: `N_minor_postseason_champ_${updatedGame.id}`,
+                date: updatedGame.date,
+                title: `${state.teams.find(t=>t.id===seriesWinner)?.name || seriesWinner} 奪得二軍總冠軍！`,
+                content: `恭喜獲得二軍最高榮耀！`,
+                type: 'league'
+              });
+            }
+          }
         }
 
         // Handle Postseason logic

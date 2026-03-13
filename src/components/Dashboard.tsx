@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { format, isSameDay, parseISO, getMonth, getDate } from 'date-fns';
 import GameDetailsModal from './GameDetailsModal';
 import { cn } from './Layout';
+import TeamLogo from './TeamLogo';
 
 function getSeasonPhase(date: Date) {
   const month = getMonth(date) + 1; // 1-12
@@ -97,7 +98,7 @@ export default function Dashboard() {
                         <div className="text-xs text-zinc-500 uppercase tracking-wider mt-0.5">{away?.league || game.league}</div>
                       </div>
                       <div className="w-12 h-12 rounded-full flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-inner">
-                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: away?.logoColor || '#52525b' }}></div>
+                        <TeamLogo teamId={game.awayTeamId} className="w-8 h-8" />
                       </div>
                       <div className="text-3xl font-black w-12 text-center text-zinc-300 font-mono">
                         {game.status === 'finished' ? game.awayScore : '-'}
@@ -118,7 +119,7 @@ export default function Dashboard() {
                         {game.status === 'finished' ? game.homeScore : '-'}
                       </div>
                       <div className="w-12 h-12 rounded-full flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-inner">
-                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: home?.logoColor || '#52525b' }}></div>
+                        <TeamLogo teamId={game.homeTeamId} className="w-8 h-8" />
                       </div>
                       <div className="text-left">
                         <div className="font-bold text-lg text-zinc-200 group-hover:text-zinc-100 transition-colors">{getTeamName(game.homeTeamId, home)}</div>

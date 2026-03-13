@@ -6,14 +6,40 @@ import { cn } from './Layout';
 export default function Awards() {
   const { players, teams, historicalStats, currentDate } = useGameStore();
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+  const [activeTab, setActiveTab] = useState<'regular' | 'minor' | 'spring' | 'winter'>('regular');
 
   const isCurrentYear = selectedYear === currentDate.getFullYear();
-  const historicalData = historicalStats.find(h => h.year === selectedYear)?.playerStats || {};
+  const historicalData = historicalStats.find(h => h.year === selectedYear);
 
-  const getTeamName = (teamId: string) => teams.find(t => t.id === teamId)?.name || teamId;
-  const getTeamLogoColor = (teamId: string) => teams.find(t => t.id === teamId)?.logoColor || '#3f3f46';
+  const getTeamName = (teamId: string) => {
+    if (teamId.startsWith('WB_TEAM')) {
+      const wbNames: Record<string, string> = {
+        'WB_TEAM1': '香蕉一隊', 'WB_TEAM2': '香蕉二隊', 'WB_TEAM3': '香蕉三隊',
+        'WB_TEAM4': '香蕉四隊', 'WB_TEAM5': '香蕉五隊', 'WB_TEAM6': '香蕉六隊'
+      };
+      return wbNames[teamId] || teamId;
+    }
+    return teams.find(t => t.id === teamId)?.name || teamId;
+  };
 
-  const getPlayerStats = (p: Player) => isCurrentYear ? p.seasonStats : historicalData[p.id];
+  const getTeamLogoColor = (teamId: string) => {
+    if (teamId.startsWith('WB_TEAM')) return '#eab308';
+    return teams.find(t => t.id === teamId)?.logoColor || '#3f3f46';
+  };
+
+  const getPlayerStats = (p: Player) => {
+    if (isCurrentYear) {
+      if (activeTab === 'minor') return p.minorStats;
+      if (activeTab === 'spring') return p.springStats;
+      if (activeTab === 'winter') return p.winterStats;
+      return p.seasonStats;
+    } else {
+      if (activeTab === 'minor') return historicalData?.minorPlayerStats?.[p.id];
+      if (activeTab === 'spring') return historicalData?.springPlayerStats?.[p.id];
+      if (activeTab === 'winter') return historicalData?.winterPlayerStats?.[p.id];
+      return historicalData?.playerStats?.[p.id];
+    }
+  };
 
   // Batters
   const batters = players.filter(p => p.position !== 'P' && getPlayerStats(p) && getPlayerStats(p)!.atBats > 0);
@@ -87,20 +113,61 @@ export default function Awards() {
             <p className="text-zinc-500 mt-1">檢視聯盟各項數據領先者</p>
           </div>
           
-          {availableYears.length > 1 && (
-            <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-2 shadow-inner backdrop-blur-sm">
-              <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest pl-2">賽季 Season</span>
-              <select 
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="bg-zinc-950 border border-zinc-700 text-zinc-200 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 font-mono font-bold"
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-1 shadow-inner backdrop-blur-sm">
+              <button
+                onClick={() => setActiveTab('regular')}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                  activeTab === 'regular' ? "bg-zinc-800 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+                )}
               >
-                {availableYears.map(year => (
-                  <option key={year} value={year}>{year} 年</option>
-                ))}
-              </select>
+                一軍
+              </button>
+              <button
+                onClick={() => setActiveTab('minor')}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                  activeTab === 'minor' ? "bg-zinc-800 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+                )}
+              >
+                二軍
+              </button>
+              <button
+                onClick={() => setActiveTab('spring')}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                  activeTab === 'spring' ? "bg-zinc-800 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+                )}
+              >
+                春訓
+              </button>
+              <button
+                onClick={() => setActiveTab('winter')}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                  activeTab === 'winter' ? "bg-zinc-800 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+                )}
+              >
+                冬季聯盟
+              </button>
             </div>
-          )}
+
+            {availableYears.length > 1 && (
+              <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-2 shadow-inner backdrop-blur-sm">
+                <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest pl-2">賽季 Season</span>
+                <select 
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="bg-zinc-950 border border-zinc-700 text-zinc-200 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 font-mono font-bold"
+                >
+                  {availableYears.map(year => (
+                    <option key={year} value={year}>{year} 年</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="space-y-10">

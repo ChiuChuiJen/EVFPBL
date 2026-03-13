@@ -14,19 +14,19 @@ export const STATES = [
 
 export const TEAMS: Team[] = [
   // R+ League
-  { id: 'T1', name: '陽明金烏', city: '陽明市', state: '旭日州', league: 'R+', logoColor: '#F59E0B', stadium: { name: '陽明市立棒球場', capacity: 20000, type: 'outdoor', weatherImpact: 0.8 } },
-  { id: 'T2', name: '碧波海神', city: '碧波市', state: '蒼海州', league: 'R+', logoColor: '#3B82F6', stadium: { name: '碧波海灣球場', capacity: 18000, type: 'outdoor', weatherImpact: 1.0 } },
-  { id: 'T3', name: '綠林遊俠', city: '綠林市', state: '翠谷州', league: 'R+', logoColor: '#10B981', stadium: { name: '綠林生態巨蛋', capacity: 35000, type: 'dome', weatherImpact: 0 } },
-  { id: 'T4', name: '鋼鐵巨獸', city: '鋼鐵市', state: '鐵峰州', league: 'R+', logoColor: '#6B7280', stadium: { name: '鋼鐵工業球場', capacity: 25000, type: 'retractable', weatherImpact: 0.3 } },
-  { id: 'T5', name: '觀星彗星', city: '觀星市', state: '星辰州', league: 'R+', logoColor: '#8B5CF6', stadium: { name: '觀星天文台球場', capacity: 22000, type: 'outdoor', weatherImpact: 0.7 } },
-  { id: 'T6', name: '迷霧幻影', city: '迷霧市', state: '雲霧州', league: 'R+', logoColor: '#9CA3AF', stadium: { name: '迷霧山谷球場', capacity: 15000, type: 'outdoor', weatherImpact: 0.9 } },
+  { id: 'T1', name: '陽明金烏', city: '陽明市', state: '旭日州', league: 'R+', logoColor: '#F59E0B', stadium: { name: '陽明市立棒球場', capacity: 20000, type: 'outdoor', weatherImpact: 0.8 }, minorLeagueStadium: '陽明二軍訓練基地' },
+  { id: 'T2', name: '碧波海神', city: '碧波市', state: '蒼海州', league: 'R+', logoColor: '#3B82F6', stadium: { name: '碧波海灣球場', capacity: 18000, type: 'outdoor', weatherImpact: 1.0 }, minorLeagueStadium: '碧波二軍訓練基地' },
+  { id: 'T3', name: '綠林遊俠', city: '綠林市', state: '翠谷州', league: 'R+', logoColor: '#10B981', stadium: { name: '綠林生態巨蛋', capacity: 35000, type: 'dome', weatherImpact: 0 }, minorLeagueStadium: '綠林二軍訓練基地' },
+  { id: 'T4', name: '鋼鐵巨獸', city: '鋼鐵市', state: '鐵峰州', league: 'R+', logoColor: '#6B7280', stadium: { name: '鋼鐵工業球場', capacity: 25000, type: 'retractable', weatherImpact: 0.3 }, minorLeagueStadium: '鋼鐵二軍訓練基地' },
+  { id: 'T5', name: '觀星彗星', city: '觀星市', state: '星辰州', league: 'R+', logoColor: '#8B5CF6', stadium: { name: '觀星天文台球場', capacity: 22000, type: 'outdoor', weatherImpact: 0.7 }, minorLeagueStadium: '觀星二軍訓練基地' },
+  { id: 'T6', name: '迷霧幻影', city: '迷霧市', state: '雲霧州', league: 'R+', logoColor: '#9CA3AF', stadium: { name: '迷霧山谷球場', capacity: 15000, type: 'outdoor', weatherImpact: 0.9 }, minorLeagueStadium: '迷霧二軍訓練基地' },
   // P1 League
-  { id: 'T7', name: '炎夏火鳥', city: '炎夏市', state: '烈陽州', league: 'P1', logoColor: '#EF4444', stadium: { name: '炎夏熱浪球場', capacity: 28000, type: 'outdoor', weatherImpact: 0.8 } },
-  { id: 'T8', name: '百花蜜蜂', city: '百花市', state: '繁花州', league: 'P1', logoColor: '#FCD34D', stadium: { name: '百花花園球場', capacity: 16000, type: 'outdoor', weatherImpact: 0.6 } },
-  { id: 'T9', name: '晨曦曙光', city: '晨曦市', state: '旭日州', league: 'P1', logoColor: '#F97316', stadium: { name: '晨曦巨蛋', capacity: 40000, type: 'dome', weatherImpact: 0 } },
-  { id: 'T10', name: '觀海巨浪', city: '觀海市', state: '蒼海州', league: 'P1', logoColor: '#06B6D4', stadium: { name: '觀海海溝球場', capacity: 24000, type: 'retractable', weatherImpact: 0.2 } },
-  { id: 'T11', name: '巨石泰坦', city: '巨石市', state: '鐵峰州', league: 'P1', logoColor: '#78716C', stadium: { name: '巨石神殿球場', capacity: 30000, type: 'outdoor', weatherImpact: 0.5 } },
-  { id: 'T12', name: '銀河星塵', city: '銀河市', state: '星辰州', league: 'P1', logoColor: '#D946EF', stadium: { name: '銀河星際球場', capacity: 19000, type: 'outdoor', weatherImpact: 0.7 } }
+  { id: 'T7', name: '炎夏火鳥', city: '炎夏市', state: '烈陽州', league: 'P1', logoColor: '#EF4444', stadium: { name: '炎夏熱浪球場', capacity: 28000, type: 'outdoor', weatherImpact: 0.8 }, minorLeagueStadium: '炎夏二軍訓練基地' },
+  { id: 'T8', name: '百花蜜蜂', city: '百花市', state: '繁花州', league: 'P1', logoColor: '#FCD34D', stadium: { name: '百花花園球場', capacity: 16000, type: 'outdoor', weatherImpact: 0.6 }, minorLeagueStadium: '百花二軍訓練基地' },
+  { id: 'T9', name: '晨曦曙光', city: '晨曦市', state: '旭日州', league: 'P1', logoColor: '#F97316', stadium: { name: '晨曦巨蛋', capacity: 40000, type: 'dome', weatherImpact: 0 }, minorLeagueStadium: '晨曦二軍訓練基地' },
+  { id: 'T10', name: '觀海巨浪', city: '觀海市', state: '蒼海州', league: 'P1', logoColor: '#06B6D4', stadium: { name: '觀海海溝球場', capacity: 24000, type: 'retractable', weatherImpact: 0.2 }, minorLeagueStadium: '觀海二軍訓練基地' },
+  { id: 'T11', name: '巨石泰坦', city: '巨石市', state: '鐵峰州', league: 'P1', logoColor: '#78716C', stadium: { name: '巨石神殿球場', capacity: 30000, type: 'outdoor', weatherImpact: 0.5 }, minorLeagueStadium: '巨石二軍訓練基地' },
+  { id: 'T12', name: '銀河星塵', city: '銀河市', state: '星辰州', league: 'P1', logoColor: '#D946EF', stadium: { name: '銀河星際球場', capacity: 19000, type: 'outdoor', weatherImpact: 0.7 }, minorLeagueStadium: '銀河二軍訓練基地' }
 ];
 
 const FIRST_NAMES = ['家豪', '志明', '俊傑', '建宏', '俊宏', '志偉', '建良', '冠宇', '柏翰', '承恩', '宇軒', '子睿', '品睿', '宥廷', '柏宇', '柏睿', '子翔', '宥辰', '冠廷', '子豪', '奕辰', '宥嘉', '品宇', '恩宇', '子軒', '柏霖', '宥翔', '品翔', '宥宇', '子宸', '宇翔', '宥霖', '柏翔', '品豪', '宥恩', '子恩', '宇恩', '宥豪', '柏恩', '品恩', '宥軒', '子宇', '宇宸', '宥宸', '柏宸', '品宸', '宥睿', '子睿', '宇睿', '宥睿', '柏睿', '品睿'];
@@ -107,6 +107,18 @@ export function generatePlayers(): Player[] {
           wins: 0,
           losses: 0,
           saves: 0
+        },
+        minorStats: {
+          gamesPlayed: 0, atBats: 0, hits: 0, homeRuns: 0, rbi: 0, stolenBases: 0,
+          inningsPitched: 0, earnedRuns: 0, strikeouts: 0, wins: 0, losses: 0, saves: 0
+        },
+        springStats: {
+          gamesPlayed: 0, atBats: 0, hits: 0, homeRuns: 0, rbi: 0, stolenBases: 0,
+          inningsPitched: 0, earnedRuns: 0, strikeouts: 0, wins: 0, losses: 0, saves: 0
+        },
+        winterStats: {
+          gamesPlayed: 0, atBats: 0, hits: 0, homeRuns: 0, rbi: 0, stolenBases: 0,
+          inningsPitched: 0, earnedRuns: 0, strikeouts: 0, wins: 0, losses: 0, saves: 0
         }
       };
       
@@ -198,10 +210,10 @@ export function generateSchedule(year: number): Game[] {
   const rLeague = TEAMS.filter(t => t.league === 'R+');
   const pLeague = TEAMS.filter(t => t.league === 'P1');
 
-  const addGame = (date: Date, home: Team | {id: string}, away: Team | {id: string}, league: string, type: string) => {
+  const addGame = (date: Date, home: Team | {id: string}, away: Team | {id: string}, league: string, type: string, isMinor: boolean = false) => {
     const day = date.getDay();
     // Weekday (1-5) 18:00, Weekend (0, 6) 16:00
-    const hour = (day === 0 || day === 6) ? 16 : 18;
+    const hour = isMinor ? 14 : ((day === 0 || day === 6) ? 16 : 18);
     const gameDate = new Date(date);
     gameDate.setHours(hour, 0, 0, 0);
 
@@ -296,6 +308,47 @@ export function generateSchedule(year: number): Game[] {
     for(let i=1; i<=3; i++) {
       addGame(date, {id: `WB_TEAM${i}`}, {id: `WB_TEAM${7-i}`}, 'WinterBanana', 'winter');
     }
+  });
+
+  // 7. Minor League Regular Season: April 10 ~ August 10, Tue-Fri
+  const minorRegularDates = getDatesBetween(new Date(year, 3, 10), new Date(year, 7, 10), [2, 3, 4, 5]);
+  let minorSeriesCounter = 0;
+  minorRegularDates.forEach(date => {
+    // Mix all 12 teams
+    const allTeams = [...rLeague, ...pLeague];
+    const matchups: [Team, Team][] = [];
+    for (let i = 0; i < 6; i++) {
+      const home = allTeams[(i + minorSeriesCounter) % 12];
+      const away = allTeams[(i + minorSeriesCounter + 6) % 12];
+      matchups.push([home, away]);
+    }
+    matchups.forEach(([home, away]) => {
+      addGame(date, home, away, 'Minor', 'minor-regular', true);
+    });
+    minorSeriesCounter++;
+  });
+
+  // 8. Minor League Postseason: Sept 1 starts. Top 4 teams.
+  // Stepladder format:
+  // Round 1: 3rd vs 4th (Best of 3)
+  const minorStepR1Dates = [new Date(year, 8, 1), new Date(year, 8, 2), new Date(year, 8, 3)];
+  minorStepR1Dates.forEach((date, i) => {
+    const isHigherSeedHome = [0, 2].includes(i);
+    addGame(date, {id: isHigherSeedHome ? 'M_SEED3' : 'M_SEED4'}, {id: isHigherSeedHome ? 'M_SEED4' : 'M_SEED3'}, 'Minor', 'minor-postseason', true);
+  });
+
+  // Round 2: Winner R1 vs 2nd (Best of 5)
+  const minorStepR2Dates = [new Date(year, 8, 5), new Date(year, 8, 6), new Date(year, 8, 8), new Date(year, 8, 9), new Date(year, 8, 10)];
+  minorStepR2Dates.forEach((date, i) => {
+    const isHigherSeedHome = [0, 1, 4].includes(i);
+    addGame(date, {id: isHigherSeedHome ? 'M_SEED2' : 'M_WINNER_R1'}, {id: isHigherSeedHome ? 'M_WINNER_R1' : 'M_SEED2'}, 'Minor', 'minor-postseason', true);
+  });
+
+  // Final: Winner R2 vs 1st (Best of 5)
+  const minorStepFinalDates = [new Date(year, 8, 12), new Date(year, 8, 13), new Date(year, 8, 15), new Date(year, 8, 16), new Date(year, 8, 17)];
+  minorStepFinalDates.forEach((date, i) => {
+    const isHigherSeedHome = [0, 1, 4].includes(i);
+    addGame(date, {id: isHigherSeedHome ? 'M_SEED1' : 'M_WINNER_R2'}, {id: isHigherSeedHome ? 'M_WINNER_R2' : 'M_SEED1'}, 'Minor', 'minor-postseason', true);
   });
 
   return games;

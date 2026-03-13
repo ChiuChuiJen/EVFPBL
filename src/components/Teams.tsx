@@ -4,11 +4,14 @@ import { Player, Team, Coach } from '../types';
 import { cn } from './Layout';
 import { Building2, Users, CloudRain, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import PlayerModal from './PlayerModal';
+import TeamLogo from './TeamLogo';
 
 export default function Teams() {
   const { teams, players, coaches, movePlayer, moveCoach, autoAdjustRoster } = useGameStore();
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teams[0]?.id);
   const [toast, setToast] = useState<{message: string, type: 'success'|'error'} | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   const selectedTeam = teams.find(t => t.id === selectedTeamId);
   const teamPlayers = players.filter(p => p.teamId === selectedTeamId);
@@ -107,7 +110,7 @@ export default function Teams() {
           </thead>
           <tbody className="divide-y divide-zinc-800/40">
             {playerList.map((player) => (
-              <tr key={player.id} className="hover:bg-zinc-800/30 transition-colors group">
+              <tr key={player.id} onClick={() => setSelectedPlayer(player)} className="hover:bg-zinc-800/30 transition-colors group cursor-pointer">
                 <td className="p-4 pl-6 font-bold text-zinc-200 group-hover:text-zinc-100 transition-colors">{player.name}</td>
                 <td className="p-4 text-zinc-400 font-mono text-sm">{player.age}</td>
                 <td className="p-4">
@@ -131,7 +134,7 @@ export default function Teams() {
                 <td className="p-4 text-right font-mono text-sm">{renderStat(getEffectiveStat(player, 'power'))}</td>
                 <td className="p-4 text-right font-mono text-sm text-zinc-400">{player.stats.speed}</td>
                 <td className="p-4 text-right font-mono text-sm">{renderStat(getEffectiveStat(player, 'fielding'))}</td>
-                <td className="p-4 pr-6 text-right">
+                <td className="p-4 pr-6 text-right" onClick={(e) => e.stopPropagation()}>
                   {player.status === 'active' && (
                     <button onClick={() => handleMove(player.id, 'reserve')} className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-md text-xs font-bold hover:bg-red-500/20 transition-all active:scale-95">降二軍</button>
                   )}
@@ -237,7 +240,9 @@ export default function Teams() {
                 : "bg-zinc-900/40 border-zinc-800/50 hover:bg-zinc-900/80 hover:border-zinc-700/50 text-zinc-400"
             )}
           >
-            <div className="w-10 h-10 rounded-full shadow-inner border border-zinc-800/50" style={{ backgroundColor: team.logoColor }}></div>
+            <div className="w-10 h-10 rounded-full shadow-inner border border-zinc-800/50 flex items-center justify-center bg-zinc-900/80">
+              <TeamLogo teamId={team.id} className="w-6 h-6" />
+            </div>
             <div className="text-center">
               <div className={cn("font-bold text-sm tracking-wide transition-colors", selectedTeamId === team.id ? "text-zinc-100" : "group-hover:text-zinc-200")}>{team.name}</div>
               <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-0.5">{team.league}</div>
@@ -250,7 +255,9 @@ export default function Teams() {
         <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="flex items-end gap-5">
-              <div className="w-20 h-20 rounded-3xl shadow-xl border border-zinc-800/50 flex-shrink-0" style={{ backgroundColor: selectedTeam.logoColor }}></div>
+              <div className="w-20 h-20 rounded-3xl shadow-xl border border-zinc-800/50 flex-shrink-0 flex items-center justify-center bg-zinc-900/80">
+                <TeamLogo teamId={selectedTeam.id} className="w-14 h-14" />
+              </div>
               <div>
                 <h2 className="text-4xl font-black text-zinc-100 tracking-tight">{selectedTeam.name}</h2>
                 <div className="flex items-center gap-3 mt-2">
@@ -304,6 +311,10 @@ export default function Teams() {
           {renderPlayerTable('預備名單 (Reserve)', reservePlayers, 'bg-zinc-500')}
           {injuredPlayers.length > 0 && renderPlayerTable('傷兵名單 (Injured)', injuredPlayers, 'bg-red-500')}
         </div>
+      )}
+
+      {selectedPlayer && (
+        <PlayerModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
       )}
     </div>
   );

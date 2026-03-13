@@ -4,6 +4,7 @@ import { format, parseISO, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from './Layout';
 import GameDetailsModal from './GameDetailsModal';
+import TeamLogo from './TeamLogo';
 
 export default function Schedule() {
   const { schedule, teams, currentDate } = useGameStore();
@@ -117,7 +118,7 @@ export default function Schedule() {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2 overflow-hidden">
-                              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: away?.logoColor || '#52525b' }}></div>
+                              <TeamLogo teamId={game.awayTeamId} className="w-4 h-4 flex-shrink-0" />
                               <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{getTeamName(game.awayTeamId, away)}</span>
                             </div>
                             <span className={cn(
@@ -128,7 +129,7 @@ export default function Schedule() {
                           
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2 overflow-hidden">
-                              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: home?.logoColor || '#52525b' }}></div>
+                              <TeamLogo teamId={game.homeTeamId} className="w-4 h-4 flex-shrink-0" />
                               <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{getTeamName(game.homeTeamId, home)}</span>
                             </div>
                             <span className={cn(

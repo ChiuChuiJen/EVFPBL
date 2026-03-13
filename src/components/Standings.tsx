@@ -1,18 +1,38 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { cn } from './Layout';
+import TeamLogo from './TeamLogo';
 
 export default function Standings() {
-  const { teams, standings, historicalStats, currentDate } = useGameStore();
+  const { teams, standings, minorStandings, springStandings, winterStandings, historicalStats, currentDate } = useGameStore();
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+  const [activeTab, setActiveTab] = useState<'regular' | 'minor' | 'spring' | 'winter'>('regular');
 
   const isCurrentYear = selectedYear === currentDate.getFullYear();
-  const displayStandings = isCurrentYear 
-    ? standings 
-    : historicalStats.find(h => h.year === selectedYear)?.standings || {};
+  const historicalData = historicalStats.find(h => h.year === selectedYear);
+  
+  const displayStandings = isCurrentYear ? standings : (historicalData?.standings || {});
+  const displayMinorStandings = isCurrentYear ? minorStandings : (historicalData?.minorStandings || {});
+  const displaySpringStandings = isCurrentYear ? springStandings : (historicalData?.springStandings || {});
+  const displayWinterStandings = isCurrentYear ? winterStandings : (historicalData?.winterStandings || {});
 
-  const rLeagueTeams = teams.filter(t => t.league === 'R+').map(t => displayStandings[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
-  const pLeagueTeams = teams.filter(t => t.league === 'P1').map(t => displayStandings[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
+  const getSortedTeams = (standingsObj: Record<string, any>, filterFn?: (t: any) => boolean) => {
+    let filteredTeams = teams;
+    if (filterFn) {
+      filteredTeams = teams.filter(filterFn);
+    }
+    return filteredTeams.map(t => standingsObj[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
+  };
+
+  const rLeagueTeams = getSortedTeams(displayStandings, t => t.league === 'R+');
+  const pLeagueTeams = getSortedTeams(displayStandings, t => t.league === 'P1');
+  const minorTeams = getSortedTeams(displayMinorStandings);
+  const springTeams = getSortedTeams(displaySpringStandings);
+  
+  // Winter League teams are not in the main teams list, they are WB_TEAM1 to WB_TEAM6
+  const winterTeams = Object.values(displayWinterStandings)
+    .filter((t: any) => t.teamId.startsWith('WB_TEAM'))
+    .sort((a: any, b: any) => b.winPercentage - a.winPercentage);
 
   const availableYears = [currentDate.getFullYear(), ...historicalStats.map(h => h.year)].sort((a, b) => b - a);
 
@@ -40,7 +60,27 @@ export default function Standings() {
           </thead>
           <tbody className="divide-y divide-zinc-800/40">
             {leagueTeams.map((record, index) => {
-              const team = teams.find(t => t.id === record.teamId);
+              let teamName = record.teamId;
+              let teamCity = '';
+              let logoColor = '#52525b'; // default zinc-500
+              
+              if (record.teamId.startsWith('WB_TEAM')) {
+                const wbNames: Record<string, string> = {
+                  'WB_TEAM1': '香蕉一隊', 'WB_TEAM2': '香蕉二隊', 'WB_TEAM3': '香蕉三隊',
+                  'WB_TEAM4': '香蕉四隊', 'WB_TEAM5': '香蕉五隊', 'WB_TEAM6': '香蕉六隊'
+                };
+                teamName = wbNames[record.teamId] || record.teamId;
+                teamCity = '冬季聯盟';
+                logoColor = '#eab308'; // yellow-500
+              } else {
+                const team = teams.find(t => t.id === record.teamId);
+                if (team) {
+                  teamName = team.name;
+                  teamCity = team.city;
+                  logoColor = team.logoColor;
+                }
+              }
+
               const topTeam = leagueTeams[0];
               const gamesBehind = index === 0 ? '-' : ((topTeam.wins - record.wins) + (record.losses - topTeam.losses)) / 2;
               
@@ -58,11 +98,11 @@ export default function Standings() {
                   </td>
                   <td className="p-4 font-bold text-zinc-200 flex items-center gap-4 group-hover:text-zinc-100 transition-colors">
                     <div className="w-8 h-8 rounded-full border border-zinc-700/50 shadow-inner flex items-center justify-center bg-zinc-900">
-                      <div className="w-5 h-5 rounded-full" style={{ backgroundColor: team?.logoColor }}></div>
+                      <TeamLogo teamId={record.teamId} className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="text-base">{team?.name}</div>
-                      <div className="text-xs font-normal text-zinc-500 uppercase tracking-wider mt-0.5">{team?.city}</div>
+                      <div className="text-base">{teamName}</div>
+                      <div className="text-xs font-normal text-zinc-500 uppercase tracking-wider mt-0.5">{teamCity}</div>
                     </div>
                   </td>
                   <td className="p-4 text-right font-mono text-zinc-300">{record.wins}</td>
@@ -100,23 +140,72 @@ export default function Standings() {
           <p className="text-zinc-500 mt-1">聯盟各隊戰績與排名</p>
         </div>
         
-        {availableYears.length > 1 && (
-          <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-2 shadow-inner backdrop-blur-sm">
-            <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest pl-2">賽季 Season</span>
-            <select 
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-zinc-950 border border-zinc-700 text-zinc-200 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 font-mono font-bold"
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-1 shadow-inner backdrop-blur-sm">
+            <button
+              onClick={() => setActiveTab('regular')}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                activeTab === 'regular' ? "bg-zinc-800 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+              )}
             >
-              {availableYears.map(year => (
-                <option key={year} value={year}>{year} 年</option>
-              ))}
-            </select>
+              一軍
+            </button>
+            <button
+              onClick={() => setActiveTab('minor')}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                activeTab === 'minor' ? "bg-zinc-800 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              二軍
+            </button>
+            <button
+              onClick={() => setActiveTab('spring')}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                activeTab === 'spring' ? "bg-zinc-800 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              春訓
+            </button>
+            <button
+              onClick={() => setActiveTab('winter')}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                activeTab === 'winter' ? "bg-zinc-800 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              冬季聯盟
+            </button>
           </div>
-        )}
+
+          {availableYears.length > 1 && (
+            <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-2 shadow-inner backdrop-blur-sm">
+              <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest pl-2">賽季 Season</span>
+              <select 
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="bg-zinc-950 border border-zinc-700 text-zinc-200 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 font-mono font-bold"
+              >
+                {availableYears.map(year => (
+                  <option key={year} value={year}>{year} 年</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
-      {renderTable(rLeagueTeams, 'R+ 聯盟 (DH制)', 'bg-emerald-500')}
-      {renderTable(pLeagueTeams, 'P1 聯盟 (非DH制)', 'bg-blue-500')}
+
+      {activeTab === 'regular' && (
+        <>
+          {renderTable(rLeagueTeams, 'R+ 聯盟 (DH制)', 'bg-emerald-500')}
+          {renderTable(pLeagueTeams, 'P1 聯盟 (非DH制)', 'bg-blue-500')}
+        </>
+      )}
+      {activeTab === 'minor' && renderTable(minorTeams, '二軍例行賽', 'bg-purple-500')}
+      {activeTab === 'spring' && renderTable(springTeams, '春訓熱身賽', 'bg-pink-500')}
+      {activeTab === 'winter' && renderTable(winterTeams, '冬季香蕉聯盟', 'bg-yellow-500')}
     </div>
   );
 }

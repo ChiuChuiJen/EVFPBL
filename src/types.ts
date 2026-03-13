@@ -17,6 +17,7 @@ export interface Team {
   league: League;
   logoColor: string;
   stadium: Stadium;
+  minorLeagueStadium: string;
 }
 
 export type Position = 'P' | 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF';
@@ -41,6 +42,48 @@ export interface Player {
     };
   };
   seasonStats?: {
+    gamesPlayed: number;
+    atBats: number;
+    hits: number;
+    homeRuns: number;
+    rbi: number;
+    stolenBases: number;
+    inningsPitched: number;
+    earnedRuns: number;
+    strikeouts: number;
+    wins: number;
+    losses: number;
+    saves: number;
+  };
+  minorStats?: {
+    gamesPlayed: number;
+    atBats: number;
+    hits: number;
+    homeRuns: number;
+    rbi: number;
+    stolenBases: number;
+    inningsPitched: number;
+    earnedRuns: number;
+    strikeouts: number;
+    wins: number;
+    losses: number;
+    saves: number;
+  };
+  springStats?: {
+    gamesPlayed: number;
+    atBats: number;
+    hits: number;
+    homeRuns: number;
+    rbi: number;
+    stolenBases: number;
+    inningsPitched: number;
+    earnedRuns: number;
+    strikeouts: number;
+    wins: number;
+    losses: number;
+    saves: number;
+  };
+  winterStats?: {
     gamesPlayed: number;
     atBats: number;
     hits: number;
@@ -87,8 +130,8 @@ export interface Game {
   homeScore: number;
   awayScore: number;
   status: GameStatus;
-  league: League | 'Interleague' | 'AllStar' | 'Postseason' | 'WinterBanana' | 'SpringTraining' | 'GloryOne';
-  type: 'regular' | 'all-star' | 'postseason' | 'winter' | 'spring' | 'glory-one';
+  league: League | 'Interleague' | 'AllStar' | 'Postseason' | 'WinterBanana' | 'SpringTraining' | 'GloryOne' | 'Minor';
+  type: 'regular' | 'all-star' | 'postseason' | 'winter' | 'spring' | 'glory-one' | 'minor-regular' | 'minor-postseason';
   attendance?: number;
   location?: string;
   weather?: WeatherCondition;
