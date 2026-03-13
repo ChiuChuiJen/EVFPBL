@@ -13,6 +13,7 @@ interface GameState {
   schedule: Game[];
   standings: Record<string, StandingsRecord>;
   news: NewsItem[];
+  historicalStats: { year: number; standings: Record<string, StandingsRecord>; playerStats: Record<string, Player['seasonStats']> }[];
   
   // Actions
   advanceTime: (minutes: number) => void;
@@ -24,6 +25,12 @@ interface GameState {
   moveCoach: (coachId: string, newStatus: 'active' | 'reserve') => { success: boolean; message?: string };
   autoAdjustRoster: (teamId: string) => { success: boolean; message?: string };
   initialize: () => void;
+}
+
+function isSpringTraining(date: Date): boolean {
+  const month = date.getMonth();
+  const day = date.getDate();
+  return month === 2 && day >= 1 && day <= 25; // March 1 to March 25
 }
 
 function getAutoAdjustedPlayers(teamId: string, players: Player[], currentDate: Date): { newPlayers: Player[], promotedPlayers: Player[], demotedPlayers: Player[] } {
@@ -80,7 +87,7 @@ function getAutoAdjustedPlayers(teamId: string, players: Player[], currentDate: 
     if (p.teamId !== teamId || p.status === 'injured') return p;
     
     let isOnCooldown = false;
-    if (p.lastMovedDate) {
+    if (p.lastMovedDate && !isSpringTraining(currentDate)) {
       const daysSinceMove = (currentDate.getTime() - parseISO(p.lastMovedDate).getTime()) / (1000 * 3600 * 24);
       if (daysSinceMove < 5) isOnCooldown = true;
     }
@@ -114,11 +121,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   schedule: [],
   standings: {},
   news: [],
+  historicalStats: [],
 
   initialize: () => {
     const players = generatePlayers();
     const coaches = generateCoaches();
-    const schedule = generateSchedule();
+    const schedule = generateSchedule(2026);
     
     // Initialize standings
     const standings: Record<string, StandingsRecord> = {};
@@ -143,7 +151,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       type: 'league'
     }];
 
-    set({ players, coaches, schedule, standings, news });
+    set({ players, coaches, schedule, standings, news, historicalStats: [] });
   },
 
   advanceTime: (minutes: number) => {
@@ -164,29 +172,110 @@ export const useGameStore = create<GameState>((set, get) => ({
       let newStandings = { ...state.standings };
       let newNews = [...state.news];
 
-      // Check if we need to resolve Postseason teams
-      const isEnteringOctober = newDate.getMonth() === 9 && state.currentDate.getMonth() === 8;
-      if (isEnteringOctober) {
+      // 每年 3/25 各球隊提交一軍名單 (自動調整)
+      const isRosterSubmitDay = newDate.getMonth() === 2 && newDate.getDate() === 25 && (state.currentDate.getMonth() !== 2 || state.currentDate.getDate() !== 25);
+      if (isRosterSubmitDay) {
+        state.teams.forEach(team => {
+          const { newPlayers: adjustedPlayers } = getAutoAdjustedPlayers(team.id, newPlayers, newDate);
+          newPlayers = adjustedPlayers;
+        });
+        newNews.unshift({
+          id: `N_roster_submit_${newDate.getFullYear()}`,
+          date: newDate.toISOString(),
+          title: `各隊提交一軍名單`,
+          content: `各隊已完成春訓，並提交開季 28 人一軍名單。`,
+          type: 'league'
+        });
+      }
+
+      // Check if we need to resolve Postseason teams (Sept 16)
+      const isPostseasonStart = newDate.getMonth() === 8 && newDate.getDate() === 16 && (state.currentDate.getMonth() !== 8 || state.currentDate.getDate() !== 16);
+      
+      // 每年 11/1 冬季香蕉聯盟成軍
+      const isWinterBananaStart = newDate.getMonth() === 10 && newDate.getDate() === 1 && (state.currentDate.getMonth() !== 10 || state.currentDate.getDate() !== 1);
+      if (isWinterBananaStart) {
+        newNews.unshift({
+          id: `N_winter_banana_${newDate.getFullYear()}`,
+          date: newDate.toISOString(),
+          title: `冬季香蕉聯盟成軍`,
+          content: `由各球隊提供、社會球隊、業餘球隊等有潛力選手組成的冬季香蕉聯盟即將開打！`,
+          type: 'league'
+        });
+      }
+
+      // 每年 12/30 下架本年度戰績，放入歷年戰績
+      const isYearEnd = newDate.getMonth() === 11 && newDate.getDate() === 30 && (state.currentDate.getMonth() !== 11 || state.currentDate.getDate() !== 30);
+      if (isYearEnd) {
+        const playerStatsToSave: Record<string, Player['seasonStats']> = {};
+        newPlayers.forEach(p => {
+          if (p.seasonStats) {
+            playerStatsToSave[p.id] = { ...p.seasonStats };
+            // Reset player stats
+            p.seasonStats = {
+              gamesPlayed: 0, atBats: 0, hits: 0, homeRuns: 0, rbi: 0, stolenBases: 0,
+              inningsPitched: 0, earnedRuns: 0, strikeouts: 0, wins: 0, losses: 0, saves: 0
+            };
+          }
+        });
+
+        const newHistoricalStats = [...state.historicalStats, {
+          year: state.currentDate.getFullYear(),
+          standings: { ...state.standings },
+          playerStats: playerStatsToSave
+        }];
+        newStandings = {};
+        TEAMS.forEach(t => {
+          newStandings[t.id] = { teamId: t.id, wins: 0, losses: 0, ties: 0, gamesPlayed: 0, winPercentage: 0, runsScored: 0, runsAllowed: 0 };
+        });
+        set({ historicalStats: newHistoricalStats, standings: newStandings });
+      }
+
+      // 每年 1/1 展開新賽程
+      const isNewYear = newDate.getMonth() === 0 && newDate.getDate() === 1 && (state.currentDate.getMonth() !== 0 || state.currentDate.getDate() !== 1);
+      if (isNewYear) {
+        newSchedule = generateSchedule(newDate.getFullYear());
+        newNews.unshift({
+          id: `N_new_year_${newDate.getFullYear()}`,
+          date: newDate.toISOString(),
+          title: `新賽季 ${newDate.getFullYear()} 展開！`,
+          content: `新的一年賽程已排定，各隊準備好迎接挑戰。`,
+          type: 'league'
+        });
+      }
+
+      if (isPostseasonStart) {
         const rTeams = Object.values(newStandings).filter(s => state.teams.find(t => t.id === s.teamId)?.league === 'R+').sort((a, b) => b.winPercentage - a.winPercentage);
         const pTeams = Object.values(newStandings).filter(s => state.teams.find(t => t.id === s.teamId)?.league === 'P1').sort((a, b) => b.winPercentage - a.winPercentage);
 
-        if (rTeams.length > 0 && pTeams.length > 0) {
-          const rChamp = rTeams[0].teamId;
-          const pChamp = pTeams[0].teamId;
+        if (rTeams.length >= 3 && pTeams.length >= 3) {
+          const rSeed1 = rTeams[0].teamId;
+          const rSeed2 = rTeams[1].teamId;
+          const rSeed3 = rTeams[2].teamId;
+          const pSeed1 = pTeams[0].teamId;
+          const pSeed2 = pTeams[1].teamId;
+          const pSeed3 = pTeams[2].teamId;
 
           newSchedule = newSchedule.map(g => {
-            if (g.homeTeamId === 'R_CHAMP') return { ...g, homeTeamId: rChamp };
-            if (g.awayTeamId === 'R_CHAMP') return { ...g, awayTeamId: rChamp };
-            if (g.homeTeamId === 'P_CHAMP') return { ...g, homeTeamId: pChamp };
-            if (g.awayTeamId === 'P_CHAMP') return { ...g, awayTeamId: pChamp };
+            if (g.homeTeamId === 'R_SEED1') return { ...g, homeTeamId: rSeed1 };
+            if (g.awayTeamId === 'R_SEED1') return { ...g, awayTeamId: rSeed1 };
+            if (g.homeTeamId === 'R_SEED2') return { ...g, homeTeamId: rSeed2 };
+            if (g.awayTeamId === 'R_SEED2') return { ...g, awayTeamId: rSeed2 };
+            if (g.homeTeamId === 'R_SEED3') return { ...g, homeTeamId: rSeed3 };
+            if (g.awayTeamId === 'R_SEED3') return { ...g, awayTeamId: rSeed3 };
+            if (g.homeTeamId === 'P_SEED1') return { ...g, homeTeamId: pSeed1 };
+            if (g.awayTeamId === 'P_SEED1') return { ...g, awayTeamId: pSeed1 };
+            if (g.homeTeamId === 'P_SEED2') return { ...g, homeTeamId: pSeed2 };
+            if (g.awayTeamId === 'P_SEED2') return { ...g, awayTeamId: pSeed2 };
+            if (g.homeTeamId === 'P_SEED3') return { ...g, homeTeamId: pSeed3 };
+            if (g.awayTeamId === 'P_SEED3') return { ...g, awayTeamId: pSeed3 };
             return g;
           });
 
           newNews.unshift({
-            id: `N_postseason_start`,
+            id: `N_postseason_start_${newDate.getFullYear()}`,
             date: newDate.toISOString(),
-            title: `台灣大賽對戰組合出爐！`,
-            content: `由 R+ 聯盟冠軍 ${state.teams.find(t=>t.id===rChamp)?.name} 對決 P1 聯盟冠軍 ${state.teams.find(t=>t.id===pChamp)?.name}！`,
+            title: `季後賽名單出爐！`,
+            content: `各區前三名將展開激烈廝殺，爭奪聯盟冠軍！`,
             type: 'league'
           });
         }
@@ -329,33 +418,35 @@ export const useGameStore = create<GameState>((set, get) => ({
           newSchedule[index] = updatedGame;
         }
 
-        // Update player stats
-        newPlayers = newPlayers.map(p => {
-          if (p.id === winningPitcherId && p.seasonStats) {
-            return { ...p, seasonStats: { ...p.seasonStats, wins: p.seasonStats.wins + 1, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 6, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 8) + 2 } };
-          }
-          if (p.id === losingPitcherId && p.seasonStats) {
-            return { ...p, seasonStats: { ...p.seasonStats, losses: p.seasonStats.losses + 1, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 5, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 5) + 1 } };
-          }
-          if (p.id === mvpId && p.seasonStats) {
-            return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, atBats: p.seasonStats.atBats + 4, hits: p.seasonStats.hits + Math.floor(Math.random() * 3) + 2, homeRuns: p.seasonStats.homeRuns + (Math.random() > 0.7 ? 1 : 0), rbi: p.seasonStats.rbi + Math.floor(Math.random() * 4) + 1 } };
-          }
-          
-          // Random stats for other active players in this game
-          if ((homeActivePlayers.find(hp => hp.id === p.id) || awayActivePlayers.find(ap => ap.id === p.id)) && p.seasonStats) {
-            if (p.position === 'P') {
-              return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 1, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 2) } };
-            } else {
-              const ab = Math.floor(Math.random() * 2) + 3;
-              const hits = Math.floor(Math.random() * 3);
-              const hr = Math.random() > 0.9 ? 1 : 0;
-              const rbi = hr > 0 ? Math.floor(Math.random() * 3) + 1 : (hits > 0 ? Math.floor(Math.random() * 2) : 0);
-              const sb = Math.random() > 0.9 ? 1 : 0;
-              return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, atBats: p.seasonStats.atBats + ab, hits: p.seasonStats.hits + hits, homeRuns: p.seasonStats.homeRuns + hr, rbi: p.seasonStats.rbi + rbi, stolenBases: p.seasonStats.stolenBases + sb } };
+        // Update player stats only for regular season
+        if (game.type === 'regular') {
+          newPlayers = newPlayers.map(p => {
+            if (p.id === winningPitcherId && p.seasonStats) {
+              return { ...p, seasonStats: { ...p.seasonStats, wins: p.seasonStats.wins + 1, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 6, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 8) + 2 } };
             }
-          }
-          return p;
-        });
+            if (p.id === losingPitcherId && p.seasonStats) {
+              return { ...p, seasonStats: { ...p.seasonStats, losses: p.seasonStats.losses + 1, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 5, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 5) + 1 } };
+            }
+            if (p.id === mvpId && p.seasonStats) {
+              return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, atBats: p.seasonStats.atBats + 4, hits: p.seasonStats.hits + Math.floor(Math.random() * 3) + 2, homeRuns: p.seasonStats.homeRuns + (Math.random() > 0.7 ? 1 : 0), rbi: p.seasonStats.rbi + Math.floor(Math.random() * 4) + 1 } };
+            }
+            
+            // Random stats for other active players in this game
+            if ((homeActivePlayers.find(hp => hp.id === p.id) || awayActivePlayers.find(ap => ap.id === p.id)) && p.seasonStats) {
+              if (p.position === 'P') {
+                return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, inningsPitched: p.seasonStats.inningsPitched + 1, strikeouts: p.seasonStats.strikeouts + Math.floor(Math.random() * 2) } };
+              } else {
+                const ab = Math.floor(Math.random() * 2) + 3;
+                const hits = Math.floor(Math.random() * 3);
+                const hr = Math.random() > 0.9 ? 1 : 0;
+                const rbi = hr > 0 ? Math.floor(Math.random() * 3) + 1 : (hits > 0 ? Math.floor(Math.random() * 2) : 0);
+                const sb = Math.random() > 0.9 ? 1 : 0;
+                return { ...p, seasonStats: { ...p.seasonStats, gamesPlayed: p.seasonStats.gamesPlayed + 1, atBats: p.seasonStats.atBats + ab, hits: p.seasonStats.hits + hits, homeRuns: p.seasonStats.homeRuns + hr, rbi: p.seasonStats.rbi + rbi, stolenBases: p.seasonStats.stolenBases + sb } };
+              }
+            }
+            return p;
+          });
+        }
 
         // Random chance for injury
         const allActivePlayers = [...homeActivePlayers, ...awayActivePlayers];
@@ -429,17 +520,80 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         // Handle Postseason logic
         if (updatedGame.type === 'postseason') {
-          const homeWins = newSchedule.filter(g => g.type === 'postseason' && g.status === 'finished' && ((g.homeTeamId === updatedGame.homeTeamId && g.homeScore > g.awayScore) || (g.awayTeamId === updatedGame.homeTeamId && g.awayScore > g.homeScore))).length;
-          const awayWins = newSchedule.filter(g => g.type === 'postseason' && g.status === 'finished' && ((g.homeTeamId === updatedGame.awayTeamId && g.homeScore > g.awayScore) || (g.awayTeamId === updatedGame.awayTeamId && g.awayScore > g.homeScore))).length;
+          // Determine if this is Round 1 (Seed 2 vs Seed 3) or Round 2 (Seed 1 vs Winner R1)
+          const isRound1 = [updatedGame.homeTeamId, updatedGame.awayTeamId].some(id => id.includes('SEED2') || id.includes('SEED3'));
+          const targetWins = isRound1 ? 3 : 4;
+
+          const homeWins = newSchedule.filter(g => g.type === 'postseason' && g.status === 'finished' && 
+            ((g.homeTeamId === updatedGame.homeTeamId && g.homeScore > g.awayScore) || 
+             (g.awayTeamId === updatedGame.homeTeamId && g.awayScore > g.homeScore)) &&
+            [g.homeTeamId, g.awayTeamId].includes(updatedGame.awayTeamId) // same matchup
+          ).length;
+
+          const awayWins = newSchedule.filter(g => g.type === 'postseason' && g.status === 'finished' && 
+            ((g.homeTeamId === updatedGame.awayTeamId && g.homeScore > g.awayScore) || 
+             (g.awayTeamId === updatedGame.awayTeamId && g.awayScore > g.homeScore)) &&
+            [g.homeTeamId, g.awayTeamId].includes(updatedGame.homeTeamId) // same matchup
+          ).length;
+
+          if (homeWins === targetWins || awayWins === targetWins) {
+            // Cancel remaining games in this series
+            newSchedule = newSchedule.map(g => 
+              g.type === 'postseason' && g.status === 'scheduled' && 
+              [g.homeTeamId, g.awayTeamId].includes(updatedGame.homeTeamId) && 
+              [g.homeTeamId, g.awayTeamId].includes(updatedGame.awayTeamId)
+                ? { ...g, status: 'cancelled' } : g
+            );
+
+            const seriesWinner = homeWins === targetWins ? updatedGame.homeTeamId : updatedGame.awayTeamId;
+            const leaguePrefix = updatedGame.league === 'R+' ? 'R' : 'P';
+
+            if (isRound1) {
+              // Resolve Winner R1
+              newSchedule = newSchedule.map(g => {
+                if (g.homeTeamId === `${leaguePrefix}_WINNER_R1`) return { ...g, homeTeamId: seriesWinner };
+                if (g.awayTeamId === `${leaguePrefix}_WINNER_R1`) return { ...g, awayTeamId: seriesWinner };
+                return g;
+              });
+              newNews.unshift({
+                id: `N_postseason_r1_${updatedGame.id}`,
+                date: updatedGame.date,
+                title: `季後賽首輪結束！`,
+                content: `${state.teams.find(t=>t.id===seriesWinner)?.name || seriesWinner} 晉級聯盟冠軍戰！`,
+                type: 'league'
+              });
+            } else {
+              // Resolve League Champ
+              newSchedule = newSchedule.map(g => {
+                if (g.homeTeamId === `${leaguePrefix}_CHAMP`) return { ...g, homeTeamId: seriesWinner };
+                if (g.awayTeamId === `${leaguePrefix}_CHAMP`) return { ...g, awayTeamId: seriesWinner };
+                return g;
+              });
+              newNews.unshift({
+                id: `N_postseason_champ_${updatedGame.id}`,
+                date: updatedGame.date,
+                title: `${state.teams.find(t=>t.id===seriesWinner)?.name || seriesWinner} 奪得聯盟冠軍！`,
+                content: `將代表聯盟出戰 EVFPBL 榮耀一！`,
+                type: 'league'
+              });
+            }
+          }
+        }
+
+        // Handle Glory One logic
+        if (updatedGame.type === 'glory-one') {
+          const homeWins = newSchedule.filter(g => g.type === 'glory-one' && g.status === 'finished' && ((g.homeTeamId === updatedGame.homeTeamId && g.homeScore > g.awayScore) || (g.awayTeamId === updatedGame.homeTeamId && g.awayScore > g.homeScore))).length;
+          const awayWins = newSchedule.filter(g => g.type === 'glory-one' && g.status === 'finished' && ((g.homeTeamId === updatedGame.awayTeamId && g.homeScore > g.awayScore) || (g.awayTeamId === updatedGame.awayTeamId && g.awayScore > g.homeScore))).length;
 
           if (homeWins === 4 || awayWins === 4) {
-            newSchedule = newSchedule.map(g => g.type === 'postseason' && g.status === 'scheduled' ? { ...g, status: 'cancelled' } : g);
-            const champTeam = homeWins === 4 ? homeTeam : awayTeam;
+            newSchedule = newSchedule.map(g => g.type === 'glory-one' && g.status === 'scheduled' ? { ...g, status: 'cancelled' } : g);
+            const champTeamId = homeWins === 4 ? updatedGame.homeTeamId : updatedGame.awayTeamId;
+            const champTeam = state.teams.find(t => t.id === champTeamId);
             if (champTeam) {
               newNews.unshift({
-                id: `N_champ_${updatedGame.id}`,
+                id: `N_glory_one_champ_${updatedGame.id}`,
                 date: updatedGame.date,
-                title: `${champTeam.name} 奪得總冠軍！`,
+                title: `${champTeam.name} 奪得 EVFPBL 榮耀一總冠軍！`,
                 content: `以 4 勝 ${Math.min(homeWins, awayWins)} 敗的成績封王！`,
                 type: 'league'
               });
@@ -515,7 +669,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         return state;
       }
 
-      if (player.lastMovedDate) {
+      if (player.lastMovedDate && !isSpringTraining(state.currentDate)) {
         const daysSinceMove = (state.currentDate.getTime() - parseISO(player.lastMovedDate).getTime()) / (1000 * 3600 * 24);
         if (daysSinceMove < 5) {
           message = `冷卻中，還需 ${Math.ceil(5 - daysSinceMove)} 天才能再次異動`;
@@ -594,7 +748,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         return state;
       }
 
-      if (coach.lastMovedDate) {
+      if (coach.lastMovedDate && !isSpringTraining(state.currentDate)) {
         const daysSinceMove = (state.currentDate.getTime() - parseISO(coach.lastMovedDate).getTime()) / (1000 * 3600 * 24);
         if (daysSinceMove < 5) {
           message = `冷卻中，還需 ${Math.ceil(5 - daysSinceMove)} 天才能再次異動`;

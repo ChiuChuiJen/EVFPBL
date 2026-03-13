@@ -191,7 +191,7 @@ function getInterleagueMatchups(rTeams: Team[], pTeams: Team[], seriesIndex: num
   return matchups;
 }
 
-export function generateSchedule(): Game[] {
+export function generateSchedule(year: number): Game[] {
   const games: Game[] = [];
   let gameId = 1;
 
@@ -199,14 +199,14 @@ export function generateSchedule(): Game[] {
   const pLeague = TEAMS.filter(t => t.league === 'P1');
 
   const addGame = (date: Date, home: Team | {id: string}, away: Team | {id: string}, league: string, type: string) => {
-    const day = getDay(date);
+    const day = date.getDay();
     // Weekday (1-5) 18:00, Weekend (0, 6) 16:00
     const hour = (day === 0 || day === 6) ? 16 : 18;
     const gameDate = new Date(date);
     gameDate.setHours(hour, 0, 0, 0);
 
     games.push({
-      id: `G${gameId++}`,
+      id: `G${year}_${gameId++}`,
       date: gameDate.toISOString(),
       homeTeamId: home.id,
       awayTeamId: away.id,
@@ -218,110 +218,85 @@ export function generateSchedule(): Game[] {
     });
   };
 
-  // 1. Spring Training (March 2026) - 4 weeks
-  let currentDate = new Date(2026, 2, 1); // March 1
-  for (let week = 1; week <= 4; week++) {
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-    const wed = addDays(weekStart, 2);
-    const sat = addDays(weekStart, 5);
-
-    for(let i=0; i<6; i++) {
-      addGame(wed, TEAMS[i], TEAMS[11-i], 'SpringTraining', 'spring');
-      addGame(sat, TEAMS[11-i], TEAMS[i], 'SpringTraining', 'spring');
+  function getDatesBetween(startDate: Date, endDate: Date, allowedDaysOfWeek?: number[]): Date[] {
+    const dates: Date[] = [];
+    let current = new Date(startDate);
+    while (current <= endDate) {
+      if (!allowedDaysOfWeek || allowedDaysOfWeek.includes(current.getDay())) {
+        dates.push(new Date(current));
+      }
+      current = addDays(current, 1);
     }
-    currentDate = addDays(currentDate, 7);
+    return dates;
   }
 
-  // 2. Regular Season (April to September)
-  currentDate = new Date(2026, 3, 1); // April 1
+  // 1. Spring Training: March 5 ~ March 22, every Tue(2), Thu(4), Sat(6)
+  const springDates = getDatesBetween(new Date(year, 2, 5), new Date(year, 2, 22), [2, 4, 6]);
+  springDates.forEach(date => {
+    for(let i=0; i<6; i++) {
+      addGame(date, TEAMS[i], TEAMS[11-i], 'SpringTraining', 'spring');
+    }
+  });
+
+  // 2. Regular Season (intra-league): April 1 ~ June 30
+  const regularDates1 = getDatesBetween(new Date(year, 3, 1), new Date(year, 5, 30), [2, 3, 5, 6, 0]);
   let seriesCounter = 0;
+  regularDates1.forEach(date => {
+    const matchups = [...getMatchups(rLeague, seriesCounter), ...getMatchups(pLeague, seriesCounter)];
+    matchups.forEach(([home, away]) => {
+      addGame(date, home, away, home.league, 'regular');
+    });
+    seriesCounter++;
+  });
+
+  // 3. Regular Season (inter-league): July 15 ~ Sept 15
+  const regularDates2 = getDatesBetween(new Date(year, 6, 15), new Date(year, 8, 15), [2, 3, 5, 6, 0]);
   let interleagueSeriesCounter = 0;
-  
-  for (let week = 1; week <= 26; week++) {
-    const isPatternA = week % 2 !== 0;
-    
-    // Interleague: June W3, W4 (Week 11, 12) and July W3, W4 (Week 15, 16)
-    // All-Star: July W1 (Week 13)
-    // Break: July W2 (Week 14)
-    
-    const isInterleague = [11, 12, 15, 16].includes(week);
-    const isAllStar = week === 13;
-    const isBreak = week === 14;
-    
-    if (isBreak) {
-      currentDate = addDays(currentDate, 7);
-      continue;
-    }
-    
-    if (isAllStar) {
-      // Add All-Star games on Saturday and Sunday
-      const saturday = addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 5);
-      const sunday = addDays(saturday, 1);
-      
-      addGame(saturday, {id: 'R_ALLSTAR'}, {id: 'P_ALLSTAR'}, 'AllStar', 'all-star');
-      addGame(sunday, {id: 'P_ALLSTAR'}, {id: 'R_ALLSTAR'}, 'AllStar', 'all-star');
-      
-      currentDate = addDays(currentDate, 7);
-      continue;
-    }
-    
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-    
-    // Series 1: Tue/Wed (Days 1, 2)
-    const series1Days = [1, 2];
-    let matchups1 = isInterleague 
-      ? getInterleagueMatchups(rLeague, pLeague, interleagueSeriesCounter++)
-      : [...getMatchups(rLeague, seriesCounter), ...getMatchups(pLeague, seriesCounter)];
-    if (!isInterleague) seriesCounter++;
-    
-    series1Days.forEach(dayOffset => {
-      const gameDate = addDays(weekStart, dayOffset);
-      matchups1.forEach(([home, away]) => {
-        addGame(gameDate, home, away, isInterleague ? 'Interleague' : home.league, 'regular');
-      });
+  regularDates2.forEach(date => {
+    const matchups = getInterleagueMatchups(rLeague, pLeague, interleagueSeriesCounter);
+    matchups.forEach(([home, away]) => {
+      addGame(date, home, away, 'Interleague', 'regular');
     });
-    
-    // Series 2: Fri/Sat(/Sun) (Days 4, 5, 6)
-    const series2Days = isPatternA ? [4, 5] : [4, 5, 6];
-    let matchups2 = isInterleague 
-      ? getInterleagueMatchups(rLeague, pLeague, interleagueSeriesCounter++)
-      : [...getMatchups(rLeague, seriesCounter), ...getMatchups(pLeague, seriesCounter)];
-    if (!isInterleague) seriesCounter++;
-    
-    series2Days.forEach(dayOffset => {
-      const gameDate = addDays(weekStart, dayOffset);
-      matchups2.forEach(([home, away]) => {
-        addGame(gameDate, home, away, isInterleague ? 'Interleague' : home.league, 'regular');
-      });
-    });
-    
-    currentDate = addDays(currentDate, 7);
-  }
-  
-  // 3. Postseason (Taiwan Series) - October 2026
-  currentDate = new Date(2026, 9, 10); // Oct 10
-  for (let i = 0; i < 7; i++) {
-    let offset = i;
-    if (i >= 2) offset += 1;
-    if (i >= 5) offset += 1;
-    const date = addDays(currentDate, offset);
+    interleagueSeriesCounter++;
+  });
+
+  // 4. Postseason: Sept 25 starts.
+  // Round 1: 3rd vs 2nd (Best of 5)
+  const r1Dates = [
+    new Date(year, 8, 25), new Date(year, 8, 26), new Date(year, 8, 28), new Date(year, 8, 29), new Date(year, 8, 30)
+  ];
+  r1Dates.forEach((date, i) => {
+    const isHigherSeedHome = [0, 1, 4].includes(i);
+    addGame(date, {id: isHigherSeedHome ? 'R_SEED2' : 'R_SEED3'}, {id: isHigherSeedHome ? 'R_SEED3' : 'R_SEED2'}, 'Postseason', 'postseason');
+    addGame(date, {id: isHigherSeedHome ? 'P_SEED2' : 'P_SEED3'}, {id: isHigherSeedHome ? 'P_SEED3' : 'P_SEED2'}, 'Postseason', 'postseason');
+  });
+
+  // Round 2: Winner vs 1st (Best of 7)
+  const r2Dates = [
+    new Date(year, 9, 5), new Date(year, 9, 6), new Date(year, 9, 8), new Date(year, 9, 9), new Date(year, 9, 10), new Date(year, 9, 12), new Date(year, 9, 13)
+  ];
+  r2Dates.forEach((date, i) => {
+    const isHigherSeedHome = [0, 1, 5, 6].includes(i);
+    addGame(date, {id: isHigherSeedHome ? 'R_SEED1' : 'R_WINNER_R1'}, {id: isHigherSeedHome ? 'R_WINNER_R1' : 'R_SEED1'}, 'Postseason', 'postseason');
+    addGame(date, {id: isHigherSeedHome ? 'P_SEED1' : 'P_WINNER_R1'}, {id: isHigherSeedHome ? 'P_WINNER_R1' : 'P_SEED1'}, 'Postseason', 'postseason');
+  });
+
+  // 5. EVFPBL Glory One: 1 week after Postseason ends.
+  const gloryOneDates = [
+    new Date(year, 9, 20), new Date(year, 9, 21), new Date(year, 9, 23), new Date(year, 9, 24), new Date(year, 9, 25), new Date(year, 9, 27), new Date(year, 9, 28)
+  ];
+  gloryOneDates.forEach((date, i) => {
     const isRHome = [0, 1, 5, 6].includes(i);
-    addGame(date, {id: isRHome ? 'R_CHAMP' : 'P_CHAMP'}, {id: isRHome ? 'P_CHAMP' : 'R_CHAMP'}, 'Postseason', 'postseason');
-  }
+    addGame(date, {id: isRHome ? 'R_CHAMP' : 'P_CHAMP'}, {id: isRHome ? 'P_CHAMP' : 'R_CHAMP'}, 'GloryOne', 'glory-one');
+  });
 
-  // 4. Winter Banana League (November 2026) - 4 weeks
-  currentDate = new Date(2026, 10, 1); // Nov 1
-  for (let week = 1; week <= 4; week++) {
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-    const thu = addDays(weekStart, 3);
-    const sun = addDays(weekStart, 6);
-
-    for(let i=0; i<6; i++) {
-      addGame(thu, TEAMS[i], TEAMS[i+6], 'WinterBanana', 'winter');
-      addGame(sun, TEAMS[i+6], TEAMS[i], 'WinterBanana', 'winter');
+  // 6. Winter Banana League: Nov 10 ~ Dec 15
+  const winterDates = getDatesBetween(new Date(year, 10, 10), new Date(year, 11, 15), [2, 4, 6, 0]);
+  winterDates.forEach(date => {
+    for(let i=1; i<=3; i++) {
+      addGame(date, {id: `WB_TEAM${i}`}, {id: `WB_TEAM${7-i}`}, 'WinterBanana', 'winter');
     }
-    currentDate = addDays(currentDate, 7);
-  }
+  });
 
   return games;
 }

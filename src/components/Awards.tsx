@@ -1,32 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { Player } from '../types';
 import { cn } from './Layout';
 
 export default function Awards() {
-  const { players, teams } = useGameStore();
+  const { players, teams, historicalStats, currentDate } = useGameStore();
+  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+
+  const isCurrentYear = selectedYear === currentDate.getFullYear();
+  const historicalData = historicalStats.find(h => h.year === selectedYear)?.playerStats || {};
 
   const getTeamName = (teamId: string) => teams.find(t => t.id === teamId)?.name || teamId;
   const getTeamLogoColor = (teamId: string) => teams.find(t => t.id === teamId)?.logoColor || '#3f3f46';
 
+  const getPlayerStats = (p: Player) => isCurrentYear ? p.seasonStats : historicalData[p.id];
+
   // Batters
-  const batters = players.filter(p => p.position !== 'P' && p.seasonStats && p.seasonStats.atBats > 0);
-  const avgLeaders = [...batters].filter(p => p.seasonStats!.atBats >= 30).sort((a, b) => (b.seasonStats!.hits / b.seasonStats!.atBats) - (a.seasonStats!.hits / a.seasonStats!.atBats)).slice(0, 5);
-  const hrLeaders = [...batters].sort((a, b) => b.seasonStats!.homeRuns - a.seasonStats!.homeRuns).slice(0, 5);
-  const rbiLeaders = [...batters].sort((a, b) => b.seasonStats!.rbi - a.seasonStats!.rbi).slice(0, 5);
-  const sbLeaders = [...batters].sort((a, b) => b.seasonStats!.stolenBases - a.seasonStats!.stolenBases).slice(0, 5);
+  const batters = players.filter(p => p.position !== 'P' && getPlayerStats(p) && getPlayerStats(p)!.atBats > 0);
+  const avgLeaders = [...batters].filter(p => getPlayerStats(p)!.atBats >= 30).sort((a, b) => (getPlayerStats(b)!.hits / getPlayerStats(b)!.atBats) - (getPlayerStats(a)!.hits / getPlayerStats(a)!.atBats)).slice(0, 5);
+  const hrLeaders = [...batters].sort((a, b) => getPlayerStats(b)!.homeRuns - getPlayerStats(a)!.homeRuns).slice(0, 5);
+  const rbiLeaders = [...batters].sort((a, b) => getPlayerStats(b)!.rbi - getPlayerStats(a)!.rbi).slice(0, 5);
+  const sbLeaders = [...batters].sort((a, b) => getPlayerStats(b)!.stolenBases - getPlayerStats(a)!.stolenBases).slice(0, 5);
 
   // Pitchers
-  const pitchers = players.filter(p => p.position === 'P' && p.seasonStats && p.seasonStats.inningsPitched > 0);
-  const winLeaders = [...pitchers].sort((a, b) => b.seasonStats!.wins - a.seasonStats!.wins).slice(0, 5);
-  const soLeaders = [...pitchers].sort((a, b) => b.seasonStats!.strikeouts - a.seasonStats!.strikeouts).slice(0, 5);
-  const eraLeaders = [...pitchers].filter(p => p.seasonStats!.inningsPitched >= 10).sort((a, b) => {
-    const eraA = (a.seasonStats!.earnedRuns * 9) / a.seasonStats!.inningsPitched;
-    const eraB = (b.seasonStats!.earnedRuns * 9) / b.seasonStats!.inningsPitched;
+  const pitchers = players.filter(p => p.position === 'P' && getPlayerStats(p) && getPlayerStats(p)!.inningsPitched > 0);
+  const winLeaders = [...pitchers].sort((a, b) => getPlayerStats(b)!.wins - getPlayerStats(a)!.wins).slice(0, 5);
+  const soLeaders = [...pitchers].sort((a, b) => getPlayerStats(b)!.strikeouts - getPlayerStats(a)!.strikeouts).slice(0, 5);
+  const eraLeaders = [...pitchers].filter(p => getPlayerStats(p)!.inningsPitched >= 10).sort((a, b) => {
+    const eraA = (getPlayerStats(a)!.earnedRuns * 9) / getPlayerStats(a)!.inningsPitched;
+    const eraB = (getPlayerStats(b)!.earnedRuns * 9) / getPlayerStats(b)!.inningsPitched;
     return eraA - eraB;
   }).slice(0, 5);
 
   const injuredPlayers = players.filter(p => p.status === 'injured');
+
+  const availableYears = [currentDate.getFullYear(), ...historicalStats.map(h => h.year)].sort((a, b) => b - a);
 
   const renderLeaderboard = (title: string, playersList: Player[], getValue: (p: Player) => string | number, colorClass: string) => (
     <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl overflow-hidden backdrop-blur-sm shadow-sm flex flex-col h-full">
@@ -73,9 +81,26 @@ export default function Awards() {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       <div>
-        <div className="mb-8">
-          <h2 className="text-3xl font-black text-zinc-100 tracking-tight">個人獎項 Awards</h2>
-          <p className="text-zinc-500 mt-1">檢視聯盟各項數據領先者</p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-3xl font-black text-zinc-100 tracking-tight">個人獎項 Awards</h2>
+            <p className="text-zinc-500 mt-1">檢視聯盟各項數據領先者</p>
+          </div>
+          
+          {availableYears.length > 1 && (
+            <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-2 shadow-inner backdrop-blur-sm">
+              <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest pl-2">賽季 Season</span>
+              <select 
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="bg-zinc-950 border border-zinc-700 text-zinc-200 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 font-mono font-bold"
+              >
+                {availableYears.map(year => (
+                  <option key={year} value={year}>{year} 年</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         
         <div className="space-y-10">
@@ -85,10 +110,10 @@ export default function Awards() {
               <h3 className="text-xl font-bold text-zinc-100">打擊排行榜</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              {renderLeaderboard('打擊率 (AVG)', avgLeaders, p => (p.seasonStats!.hits / p.seasonStats!.atBats).toFixed(3), 'text-blue-400')}
-              {renderLeaderboard('全壘打 (HR)', hrLeaders, p => p.seasonStats!.homeRuns, 'text-blue-400')}
-              {renderLeaderboard('打點 (RBI)', rbiLeaders, p => p.seasonStats!.rbi, 'text-blue-400')}
-              {renderLeaderboard('盜壘 (SB)', sbLeaders, p => p.seasonStats!.stolenBases, 'text-blue-400')}
+              {renderLeaderboard('打擊率 (AVG)', avgLeaders, p => (getPlayerStats(p)!.hits / getPlayerStats(p)!.atBats).toFixed(3).replace(/^0+/, ''), 'text-blue-400')}
+              {renderLeaderboard('全壘打 (HR)', hrLeaders, p => getPlayerStats(p)!.homeRuns, 'text-blue-400')}
+              {renderLeaderboard('打點 (RBI)', rbiLeaders, p => getPlayerStats(p)!.rbi, 'text-blue-400')}
+              {renderLeaderboard('盜壘 (SB)', sbLeaders, p => getPlayerStats(p)!.stolenBases, 'text-blue-400')}
             </div>
           </div>
 
@@ -98,9 +123,9 @@ export default function Awards() {
               <h3 className="text-xl font-bold text-zinc-100">投手排行榜</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {renderLeaderboard('勝投 (W)', winLeaders, p => p.seasonStats!.wins, 'text-red-400')}
-              {renderLeaderboard('防禦率 (ERA)', eraLeaders, p => ((p.seasonStats!.earnedRuns * 9) / p.seasonStats!.inningsPitched).toFixed(2), 'text-red-400')}
-              {renderLeaderboard('三振 (SO)', soLeaders, p => p.seasonStats!.strikeouts, 'text-red-400')}
+              {renderLeaderboard('勝投 (W)', winLeaders, p => getPlayerStats(p)!.wins, 'text-red-400')}
+              {renderLeaderboard('防禦率 (ERA)', eraLeaders, p => ((getPlayerStats(p)!.earnedRuns * 9) / getPlayerStats(p)!.inningsPitched).toFixed(2), 'text-red-400')}
+              {renderLeaderboard('三振 (SO)', soLeaders, p => getPlayerStats(p)!.strikeouts, 'text-red-400')}
             </div>
           </div>
         </div>

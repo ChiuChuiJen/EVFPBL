@@ -28,6 +28,31 @@ export default function Dashboard() {
   const rLeagueTeams = teams.filter(t => t.league === 'R+').map(t => standings[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
   const pLeagueTeams = teams.filter(t => t.league === 'P1').map(t => standings[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
 
+  const getTeamName = (id: string, team?: { name: string }) => {
+    if (team) return team.name;
+    const map: Record<string, string> = {
+      'R_SEED1': 'R+ 第一種子',
+      'R_SEED2': 'R+ 第二種子',
+      'R_SEED3': 'R+ 第三種子',
+      'P_SEED1': 'P1 第一種子',
+      'P_SEED2': 'P1 第二種子',
+      'P_SEED3': 'P1 第三種子',
+      'R_WINNER_R1': 'R+ 首輪勝隊',
+      'P_WINNER_R1': 'P1 首輪勝隊',
+      'R_CHAMP': 'R+ 冠軍',
+      'P_CHAMP': 'P1 冠軍',
+      'R_ALLSTAR': 'R+ 明星隊',
+      'P_ALLSTAR': 'P1 明星隊',
+      'WB_TEAM1': '香蕉聯隊',
+      'WB_TEAM2': '猴子聯隊',
+      'WB_TEAM3': '猩猩聯隊',
+      'WB_TEAM4': '社會人聯隊',
+      'WB_TEAM5': '業餘紅隊',
+      'WB_TEAM6': '業餘藍隊',
+    };
+    return map[id] || id;
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -68,11 +93,11 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center gap-4 flex-1 justify-end">
                       <div className="text-right">
-                        <div className="font-bold text-lg text-zinc-200 group-hover:text-zinc-100 transition-colors">{away?.name || game.awayTeamId}</div>
-                        <div className="text-xs text-zinc-500 uppercase tracking-wider mt-0.5">{away?.league}</div>
+                        <div className="font-bold text-lg text-zinc-200 group-hover:text-zinc-100 transition-colors">{getTeamName(game.awayTeamId, away)}</div>
+                        <div className="text-xs text-zinc-500 uppercase tracking-wider mt-0.5">{away?.league || game.league}</div>
                       </div>
                       <div className="w-12 h-12 rounded-full flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-inner">
-                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: away?.logoColor }}></div>
+                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: away?.logoColor || '#52525b' }}></div>
                       </div>
                       <div className="text-3xl font-black w-12 text-center text-zinc-300 font-mono">
                         {game.status === 'finished' ? game.awayScore : '-'}
@@ -93,11 +118,11 @@ export default function Dashboard() {
                         {game.status === 'finished' ? game.homeScore : '-'}
                       </div>
                       <div className="w-12 h-12 rounded-full flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-inner">
-                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: home?.logoColor }}></div>
+                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: home?.logoColor || '#52525b' }}></div>
                       </div>
                       <div className="text-left">
-                        <div className="font-bold text-lg text-zinc-200 group-hover:text-zinc-100 transition-colors">{home?.name || game.homeTeamId}</div>
-                        <div className="text-xs text-zinc-500 uppercase tracking-wider mt-0.5">{home?.league}</div>
+                        <div className="font-bold text-lg text-zinc-200 group-hover:text-zinc-100 transition-colors">{getTeamName(game.homeTeamId, home)}</div>
+                        <div className="text-xs text-zinc-500 uppercase tracking-wider mt-0.5">{home?.league || game.league}</div>
                       </div>
                     </div>
                   </button>

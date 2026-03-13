@@ -18,6 +18,31 @@ export default function Schedule() {
     return gameDate >= weekStart && gameDate < addDays(weekStart, 7);
   });
 
+  const getTeamName = (id: string, team?: { name: string }) => {
+    if (team) return team.name;
+    const map: Record<string, string> = {
+      'R_SEED1': 'R+ 第一種子',
+      'R_SEED2': 'R+ 第二種子',
+      'R_SEED3': 'R+ 第三種子',
+      'P_SEED1': 'P1 第一種子',
+      'P_SEED2': 'P1 第二種子',
+      'P_SEED3': 'P1 第三種子',
+      'R_WINNER_R1': 'R+ 首輪勝隊',
+      'P_WINNER_R1': 'P1 首輪勝隊',
+      'R_CHAMP': 'R+ 冠軍',
+      'P_CHAMP': 'P1 冠軍',
+      'R_ALLSTAR': 'R+ 明星隊',
+      'P_ALLSTAR': 'P1 明星隊',
+      'WB_TEAM1': '香蕉聯隊',
+      'WB_TEAM2': '猴子聯隊',
+      'WB_TEAM3': '猩猩聯隊',
+      'WB_TEAM4': '社會人聯隊',
+      'WB_TEAM5': '業餘紅隊',
+      'WB_TEAM6': '業餘藍隊',
+    };
+    return map[id] || id;
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -92,8 +117,8 @@ export default function Schedule() {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2 overflow-hidden">
-                              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: away?.logoColor }}></div>
-                              <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{away?.name || game.awayTeamId}</span>
+                              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: away?.logoColor || '#52525b' }}></div>
+                              <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{getTeamName(game.awayTeamId, away)}</span>
                             </div>
                             <span className={cn(
                               "font-mono font-bold text-lg",
@@ -103,8 +128,8 @@ export default function Schedule() {
                           
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2 overflow-hidden">
-                              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: home?.logoColor }}></div>
-                              <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{home?.name || game.homeTeamId}</span>
+                              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: home?.logoColor || '#52525b' }}></div>
+                              <span className="font-bold text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">{getTeamName(game.homeTeamId, home)}</span>
                             </div>
                             <span className={cn(
                               "font-mono font-bold text-lg",

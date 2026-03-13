@@ -22,6 +22,31 @@ export default function GameDetailsModal({ gameId, onClose }: GameDetailsModalPr
   const lp = players.find(p => p.id === game.losingPitcherId);
   const mvp = players.find(p => p.id === game.mvpId);
 
+  const getTeamName = (id: string, team?: { name: string }) => {
+    if (team) return team.name;
+    const map: Record<string, string> = {
+      'R_SEED1': 'R+ 第一種子',
+      'R_SEED2': 'R+ 第二種子',
+      'R_SEED3': 'R+ 第三種子',
+      'P_SEED1': 'P1 第一種子',
+      'P_SEED2': 'P1 第二種子',
+      'P_SEED3': 'P1 第三種子',
+      'R_WINNER_R1': 'R+ 首輪勝隊',
+      'P_WINNER_R1': 'P1 首輪勝隊',
+      'R_CHAMP': 'R+ 冠軍',
+      'P_CHAMP': 'P1 冠軍',
+      'R_ALLSTAR': 'R+ 明星隊',
+      'P_ALLSTAR': 'P1 明星隊',
+      'WB_TEAM1': '香蕉聯隊',
+      'WB_TEAM2': '猴子聯隊',
+      'WB_TEAM3': '猩猩聯隊',
+      'WB_TEAM4': '社會人聯隊',
+      'WB_TEAM5': '業餘紅隊',
+      'WB_TEAM6': '業餘藍隊',
+    };
+    return map[id] || id;
+  };
+
   const inningsCount = Math.max(9, game.boxScore?.home.length || 9);
   const innings = Array.from({ length: inningsCount }, (_, i) => i + 1);
 
@@ -53,11 +78,11 @@ export default function GameDetailsModal({ gameId, onClose }: GameDetailsModalPr
           {/* Scoreboard */}
           <div className="flex items-center justify-between bg-zinc-950/50 rounded-3xl p-8 border border-zinc-800/40 shadow-inner">
             <div className="flex flex-col items-center gap-4 flex-1">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-black text-white shadow-xl border-4 border-zinc-800/50" style={{ backgroundColor: awayTeam?.logoColor }}>
-                {awayTeam?.name.charAt(0)}
+              <div className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-black text-white shadow-xl border-4 border-zinc-800/50" style={{ backgroundColor: awayTeam?.logoColor || '#52525b' }}>
+                {getTeamName(game.awayTeamId, awayTeam).charAt(0)}
               </div>
               <div className="text-center">
-                <div className="text-2xl font-black text-zinc-100 tracking-tight">{awayTeam?.name}</div>
+                <div className="text-2xl font-black text-zinc-100 tracking-tight">{getTeamName(game.awayTeamId, awayTeam)}</div>
                 <div className="text-xs font-bold uppercase tracking-widest text-zinc-500 mt-1">客隊 Away</div>
               </div>
             </div>
@@ -77,11 +102,11 @@ export default function GameDetailsModal({ gameId, onClose }: GameDetailsModalPr
             </div>
 
             <div className="flex flex-col items-center gap-4 flex-1">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-black text-white shadow-xl border-4 border-zinc-800/50" style={{ backgroundColor: homeTeam?.logoColor }}>
-                {homeTeam?.name.charAt(0)}
+              <div className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-black text-white shadow-xl border-4 border-zinc-800/50" style={{ backgroundColor: homeTeam?.logoColor || '#52525b' }}>
+                {getTeamName(game.homeTeamId, homeTeam).charAt(0)}
               </div>
               <div className="text-center">
-                <div className="text-2xl font-black text-zinc-100 tracking-tight">{homeTeam?.name}</div>
+                <div className="text-2xl font-black text-zinc-100 tracking-tight">{getTeamName(game.homeTeamId, homeTeam)}</div>
                 <div className="text-xs font-bold uppercase tracking-widest text-zinc-500 mt-1">主隊 Home</div>
               </div>
             </div>
@@ -109,8 +134,8 @@ export default function GameDetailsModal({ gameId, onClose }: GameDetailsModalPr
                     <tbody className="divide-y divide-zinc-800/40">
                       <tr className="hover:bg-zinc-800/30 transition-colors">
                         <td className="p-4 text-left font-bold text-zinc-300 pl-6 flex items-center gap-3">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: awayTeam?.logoColor }}></div>
-                          {awayTeam?.name}
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: awayTeam?.logoColor || '#52525b' }}></div>
+                          {getTeamName(game.awayTeamId, awayTeam)}
                         </td>
                         {innings.map((_, i) => (
                           <td key={i} className="p-4 text-zinc-400 font-mono">{game.boxScore?.away[i] ?? '-'}</td>
@@ -119,8 +144,8 @@ export default function GameDetailsModal({ gameId, onClose }: GameDetailsModalPr
                       </tr>
                       <tr className="hover:bg-zinc-800/30 transition-colors">
                         <td className="p-4 text-left font-bold text-zinc-300 pl-6 flex items-center gap-3">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: homeTeam?.logoColor }}></div>
-                          {homeTeam?.name}
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: homeTeam?.logoColor || '#52525b' }}></div>
+                          {getTeamName(game.homeTeamId, homeTeam)}
                         </td>
                         {innings.map((_, i) => (
                           <td key={i} className="p-4 text-zinc-400 font-mono">{game.boxScore?.home[i] ?? '-'}</td>

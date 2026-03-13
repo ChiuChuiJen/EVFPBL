@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { cn } from './Layout';
 
 export default function Standings() {
-  const { teams, standings } = useGameStore();
+  const { teams, standings, historicalStats, currentDate } = useGameStore();
+  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
 
-  const rLeagueTeams = teams.filter(t => t.league === 'R+').map(t => standings[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
-  const pLeagueTeams = teams.filter(t => t.league === 'P1').map(t => standings[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
+  const isCurrentYear = selectedYear === currentDate.getFullYear();
+  const displayStandings = isCurrentYear 
+    ? standings 
+    : historicalStats.find(h => h.year === selectedYear)?.standings || {};
+
+  const rLeagueTeams = teams.filter(t => t.league === 'R+').map(t => displayStandings[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
+  const pLeagueTeams = teams.filter(t => t.league === 'P1').map(t => displayStandings[t.id]).filter(Boolean).sort((a, b) => b.winPercentage - a.winPercentage);
+
+  const availableYears = [currentDate.getFullYear(), ...historicalStats.map(h => h.year)].sort((a, b) => b - a);
 
   const renderTable = (leagueTeams: typeof rLeagueTeams, title: string, colorClass: string) => (
     <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl overflow-hidden backdrop-blur-sm shadow-sm">
@@ -86,9 +94,26 @@ export default function Standings() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h2 className="text-3xl font-black text-zinc-100 tracking-tight">戰績 Standings</h2>
-        <p className="text-zinc-500 mt-1">聯盟各隊戰績與排名</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-zinc-100 tracking-tight">戰績 Standings</h2>
+          <p className="text-zinc-500 mt-1">聯盟各隊戰績與排名</p>
+        </div>
+        
+        {availableYears.length > 1 && (
+          <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-2 shadow-inner backdrop-blur-sm">
+            <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest pl-2">賽季 Season</span>
+            <select 
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="bg-zinc-950 border border-zinc-700 text-zinc-200 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 font-mono font-bold"
+            >
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year} 年</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
       {renderTable(rLeagueTeams, 'R+ 聯盟 (DH制)', 'bg-emerald-500')}
       {renderTable(pLeagueTeams, 'P1 聯盟 (非DH制)', 'bg-blue-500')}

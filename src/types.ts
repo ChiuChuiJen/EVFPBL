@@ -87,8 +87,8 @@ export interface Game {
   homeScore: number;
   awayScore: number;
   status: GameStatus;
-  league: League | 'Interleague' | 'AllStar' | 'Postseason' | 'WinterBanana' | 'SpringTraining';
-  type: 'regular' | 'all-star' | 'postseason' | 'winter' | 'spring';
+  league: League | 'Interleague' | 'AllStar' | 'Postseason' | 'WinterBanana' | 'SpringTraining' | 'GloryOne';
+  type: 'regular' | 'all-star' | 'postseason' | 'winter' | 'spring' | 'glory-one';
   attendance?: number;
   location?: string;
   weather?: WeatherCondition;
